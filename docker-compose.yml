@@ -1,0 +1,26 @@
+version: '2'
+
+services:
+  api:
+    container_name: invaders_api
+    privileged: true
+    build:
+      context: ./docker/api
+    ports:
+      - ${API_PORT}:80
+    depends_on:
+      - db
+    volumes:
+      - ./apps/:/apps
+
+  db:
+    container_name: invaders_db
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+
+  phpmyadmin:
+    container_name: invaders_pma
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - ${PMA_PORT}:80

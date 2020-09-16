@@ -1,0 +1,10 @@
+# MacOS files
+.DS_Store
+*/.DS_Store
+
+# NodeJS version
+.nvmrc
+
+# dotenv environment variables file
+.env
+*/.env
