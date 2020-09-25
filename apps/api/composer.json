@@ -11,6 +11,7 @@
         "doctrine/doctrine-bundle": "^2.1",
         "doctrine/doctrine-migrations-bundle": "^2.2",
         "doctrine/orm": "^2.7",
+        "lexik/jwt-authentication-bundle": "^2.8",
         "nelmio/cors-bundle": "^2.1",
         "phpdocumentor/reflection-docblock": "^4.3",
         "symfony/asset": "4.4.*",
@@ -25,7 +26,8 @@
         "symfony/serializer": "4.4.*",
         "symfony/twig-bundle": "4.4.*",
         "symfony/validator": "4.4.*",
-        "symfony/yaml": "4.4.*"
+        "symfony/yaml": "4.4.*",
+        "vich/uploader-bundle": "^1.8"
     },
     "require-dev": {
         "symfony/maker-bundle": "^1.21"

@@ -6,7 +6,7 @@ dotenv.config({ path: '../../.env' });
 dotenv.config();
 
 export default {
-  mode: 'spa',
+  ssr: false,
   server: {},
   /*
   ** Headers of the page
@@ -34,14 +34,18 @@ export default {
   ** Router
    */
   router: {},
-  /*,
+  /*
   ** Plugins to load before mounting the App
   */
-  plugins: [],
+  plugins: [
+    '~/plugins/google-maps',
+  ],
   /*
   ** Environment variables
    */
-  env: {},
+  env: {
+    GMAP_API_KEY: process.env.GMAP_API_KEY,
+  },
   /*
   ** Nuxt.js dev-modules
   */

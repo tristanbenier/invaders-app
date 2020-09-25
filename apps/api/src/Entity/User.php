@@ -18,6 +18,8 @@ use Symfony\Component\Serializer\Annotation\SerializedName;
  */
 class User implements UserInterface
 {
+    public const ROLE_USER = 'ROLE_USER';
+
     /**
      * @ORM\Id()
      * @ORM\GeneratedValue()
@@ -106,7 +108,7 @@ class User implements UserInterface
     {
         $roles = $this->roles;
         // guarantee every user at least has ROLE_CLIENT
-        $roles[] = self::ROLE_CLIENT;
+        $roles[] = self::ROLE_USER;
 
         return array_unique($roles);
     }
@@ -152,23 +154,6 @@ class User implements UserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         $this->plainPassword = null;
-    }
-
-    public function isActive(): ?bool
-    {
-        return $this->active;
-    }
-
-    public function setActive(bool $active): self
-    {
-        $this->active = $active;
-
-        return $this;
-    }
-
-    public function isVerified(): bool
-    {
-        return !!$this->verifiedAt;
     }
 
     public function getResetPasswordToken(): string

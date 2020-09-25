@@ -23,7 +23,8 @@
     "jwt-decode": "^2.2.0",
     "nuxt": "^2.0.0",
     "sortablejs": "^1.10.2",
-    "vue-chartjs": "^3.5.0"
+    "vue-chartjs": "^3.5.0",
+    "vue2-google-maps": "^0.10.7"
   },
   "devDependencies": {
     "@nuxtjs/eslint-config": "^2.0.0",

@@ -10,3 +10,7 @@ api_platform:
             mime_types: ['multipart/form-data']
     swagger:
         versions: [3]
+    collection:
+        pagination:
+            enabled: true
+            items_per_page: 2

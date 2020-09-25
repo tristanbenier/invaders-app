@@ -1,77 +1,80 @@
 <template>
-  <div class="container">
-    <div>
-      <Logo />
-      <h1 class="title">
-        front
-      </h1>
-      <div class="links">
-        <a
-          href="https://nuxtjs.org/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="button--green"
+  <div id="map-page">
+    <div id="map-container">
+      <GmapMap
+        ref="map"
+        :cluster="{options: {styles: clusterStyle}}"
+        :center="{lat: locations[0].lat, lng: locations[0].lng}"
+        :options="{fullscreenControl: false, styles: mapStyle}"
+        :zoom="6"
+      >
+        <GmapMarker
+          v-for="location in locations"
+          :key="location.id"
+          :position="{lat: location.lat, lng: location.lng}"
+          :options="{}"
+          @click="currentLocation = location"
         >
-          Documentation
-        </a>
-        <a
-          href="https://github.com/nuxt/nuxt.js"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="button--grey"
-        >
-          GitHub
-        </a>
-      </div>
+          <GmapInfoWindow :options="{maxWidth: 200}">
+            <code>
+              lat: {{ location.lat }},
+              lng: {{ location.lng }}
+            </code>
+          </GmapInfoWindow>
+        </GmapMarker>
+      </GmapMap>
     </div>
   </div>
 </template>
 
 <script>
-import Logo from '~/components/Logo';
 
 export default {
-  components: { Logo },
+  data () {
+    return {
+      currentLocation: {},
+      circleOptions: {},
+      locations: [
+        {
+          lat: 44.933076,
+          lng: 15.629058,
+        },
+        {
+          lat: 45.815,
+          lng: 15.9819,
+        },
+        {
+          lat: 45.12,
+          lng: 16.21,
+        },
+      ],
+      mapStyle: [],
+      clusterStyle: [
+        {
+          url: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m1.png',
+          width: 56,
+          height: 56,
+          textColor: '#fff',
+        },
+      ],
+    };
+  },
 };
 </script>
 
-<style>
-.container {
-  margin: 0 auto;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
+<style lang="scss">
+#map-page {
+  width: 100%;
+  height: 100%;
 
-.title {
-  font-family:
-    'Quicksand',
-    'Source Sans Pro',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    'Helvetica Neue',
-    Arial,
-    sans-serif;
-  display: block;
-  font-weight: 300;
-  font-size: 100px;
-  color: #35495e;
-  letter-spacing: 1px;
-}
+  #map-container {
+    width: 50%;
+    height: 50%;
 
-.subtitle {
-  font-weight: 300;
-  font-size: 42px;
-  color: #526488;
-  word-spacing: 5px;
-  padding-bottom: 15px;
-}
-
-.links {
-  padding-top: 15px;
+    .vue-map-container {
+      width: 100%;
+      height: 100%;
+    }
+  }
 }
 </style>

@@ -7,9 +7,18 @@ use App\Repository\InvaderRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
- * @ApiResource()
+ * @ApiResource(
+ *     normalizationContext={"groups"={"invader:read"}},
+ *     collectionOperations={
+ *         "get"={"normalization_context"={"groups"="invader:collection:read"}},
+ *         "post"
+ *     },
+ *     itemOperations={"get", "put", "delete"}
+ * )
+ *
  * @ORM\Entity(repositoryClass=InvaderRepository::class)
  * @ORM\Table(indexes={@ORM\Index(name="invader_name_idx", columns={"name"})})
  */
@@ -19,16 +28,22 @@ class Invader
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=30, nullable=true)
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
      */
     private $name;
 
     /**
      * @ORM\Column(type="smallint", nullable=true)
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
      */
     private $points;
 
@@ -50,6 +65,8 @@ class Invader
     /**
      * @ORM\ManyToOne(targetEntity=City::class, inversedBy="invaders")
      * @ORM\JoinColumn(nullable=false)
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
      */
     private $city;
 
@@ -60,28 +77,44 @@ class Invader
 
     /**
      * @ORM\Column(type="float")
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
      */
     private $latitude;
 
     /**
      * @ORM\Column(type="float")
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
      */
     private $longitude;
 
     /**
      * @ORM\ManyToOne(targetEntity=Status::class, inversedBy="invaders")
      * @ORM\JoinColumn(nullable=false)
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
      */
     private $status;
 
     /**
      * @ORM\ManyToMany(targetEntity=User::class, mappedBy="invaders")
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
      */
     private $users;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Image::class, mappedBy="invader", orphanRemoval=true)
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
+     */
+    private $images;
 
     public function __construct()
     {
         $this->users = new ArrayCollection();
+        $this->images = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -232,6 +265,37 @@ class Invader
         if ($this->users->contains($user)) {
             $this->users->removeElement($user);
             $user->removeInvader($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Image[]
+     */
+    public function getImages(): Collection
+    {
+        return $this->images;
+    }
+
+    public function addImage(Image $image): self
+    {
+        if (!$this->images->contains($image)) {
+            $this->images[] = $image;
+            $image->setInvader($this);
+        }
+
+        return $this;
+    }
+
+    public function removeImage(Image $image): self
+    {
+        if ($this->images->contains($image)) {
+            $this->images->removeElement($image);
+            // set the owning side to null (unless already changed)
+            if ($image->getInvader() === $this) {
+                $image->setInvader(null);
+            }
         }
 
         return $this;
