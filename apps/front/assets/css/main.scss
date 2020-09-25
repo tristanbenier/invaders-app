@@ -1,0 +1,29 @@
+/* Layout */
+
+$header_height: 56px;
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: arial;
+  font-weight: 100;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+*,
+*:focus {
+  outline: none;
+}
+
+.btn.focus,
+.btn:focus {
+  box-shadow: none;
+}

@@ -14,3 +14,4 @@ api_platform:
         pagination:
             enabled: true
             items_per_page: 2
+            client_items_per_page: true # Disabled by default

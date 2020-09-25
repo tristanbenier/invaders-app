@@ -29,7 +29,10 @@ export default {
   /*
   ** Global CSS
   */
-  css: [],
+ css: [
+  '@/assets/css/colors.scss',
+  '@/assets/css/main.scss',
+],
   /*
   ** Router
    */
@@ -38,12 +41,15 @@ export default {
   ** Plugins to load before mounting the App
   */
   plugins: [
+    '~/plugins/api',
+    '~/plugins/local-storage',
     '~/plugins/google-maps',
   ],
   /*
   ** Environment variables
    */
   env: {
+    API_URL: process.env.API_URL,
     GMAP_API_KEY: process.env.GMAP_API_KEY,
   },
   /*
@@ -52,19 +58,26 @@ export default {
   buildModules: [
     // Doc: https://github.com/nuxt-community/eslint-module
     '@nuxtjs/eslint-module',
+    // https://github.com/nuxt-community/style-resources-module
+    '@nuxtjs/style-resources',
   ],
   /*
   ** Nuxt.js modules
   */
   modules: [
-    // Doc: https://bootstrap-vue.js.org
-    'bootstrap-vue/nuxt',
+    [
+      // Doc: https://bootstrap-vue.js.org
+      'bootstrap-vue/nuxt',
+      {
+        icons: true, // Install the IconsPlugin (in addition to BootStrapVue plugin)
+      },
+    ],
   ],
   /*
-   ** Bootstrap Vue
+   ** Style resources
    */
-  bootstrapVue: {
-    icons: true, // Install the IconsPlugin (in addition to BootStrapVue plugin
+  styleResources: {
+    scss: ['~/assets/css/*.scss'],
   },
   /*
   ** Build configuration
