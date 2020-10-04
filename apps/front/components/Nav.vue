@@ -61,7 +61,7 @@ $nav_header_height: 50px;
 $nav_footer_height: 50px;
 
 .nav-container {
-  background-color: $purple_dark;
+  background-color: $grey_darker;
 
   .modal-dialog {
     margin: 0;
@@ -112,10 +112,10 @@ $nav_footer_height: 50px;
         justify-content: center;
         padding: 0;
         border: none;
-        border-top: 1px solid $purple;
+        border-top: 1px solid $grey;
 
         .footer-link-item {
-          color: $purple;
+          color: $grey;
           font-size: 12px;
           font-weight: 300;
           text-transform: uppercase;

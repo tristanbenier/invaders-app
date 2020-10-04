@@ -40,21 +40,41 @@ final class ResolveImageFileUrlSubscriber implements EventSubscriberInterface
         }
 
         $attributes = RequestAttributesExtractor::extractAttributes($request);
-        if (!$attributes || !is_a($attributes['resource_class'], Invader::class, true)) {
+        if (!$attributes) {
             return;
         }
 
-        $invaders = $controllerResult;
-
-        if (!is_iterable($invaders)) {
-            $invaders = [$invaders];
+        $resources = $controllerResult;
+        if (!is_iterable($resources)) {
+            $resources = [$resources];
         }
 
+        if (is_a($attributes['resource_class'], Invader::class, true)) {
+            $this->resolveInvaderImagesUrls($resources);
+        }
+
+        if (is_a($attributes['resource_class'], Image::class, true)) {
+            $this->resolveImagesUrls($resources);
+        }
+    }
+
+    private function resolveInvaderImagesUrls(iterable $invaders): void
+    {
         foreach ($invaders as $invader) {
             if (!$invader instanceof Invader) {
                 continue;
             }
             $this->setInvaderImagesUrl($invader);
+        }
+    }
+
+    private function resolveImagesUrls(iterable $images): void
+    {
+        foreach ($images as $image) {
+            if (!$image instanceof Image) {
+                continue;
+            }
+            $this->setImageUrl($image);
         }
     }
 

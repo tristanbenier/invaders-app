@@ -3,7 +3,10 @@
 namespace App\Entity;
 
 use ApiPlatform\Core\Annotation\ApiProperty;
+use ApiPlatform\Core\Annotation\ApiResource;
 use App\Repository\ImageRepository;
+use App\Controller\Image\CreateImageAction;
+use App\Controller\Image\RemoveImageAction;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\Serializer\Annotation\Groups;
@@ -12,8 +15,44 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
 /**
  * @ORM\Entity(repositoryClass=ImageRepository::class)
  *
+ * @ApiResource(
+ *     iri="http://schema.org/Image",
+ *     normalizationContext={"groups"={"image:read"}},
+ *     collectionOperations={
+ *         "get",
+ *         "post"={
+ *             "controller"=CreateImageAction::class,
+ *             "deserialize"=false,
+ *             "validation_groups"={"Default", "image:create"},
+ *             "openapi_context"={
+ *                 "requestBody"={
+ *                     "content"={
+ *                         "multipart/form-data"={
+ *                             "schema"={
+ *                                 "type"="object",
+ *                                 "properties"={
+ *                                     "file"={
+ *                                         "type"="string",
+ *                                         "format"="binary"
+ *                                     }
+ *                                 }
+ *                             }
+ *                         }
+ *                     }
+ *                 }
+ *             }
+ *         }
+ *     },
+ *     itemOperations={
+ *         "get",
+ *         "delete": {
+ *         }
+ *     }
+ * )
+ *
  * @Vich\Uploadable
  */
+//  *             "controller"=RemoveImageAction::class
 class Image
 {
     /**
@@ -21,7 +60,7 @@ class Image
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      *
-     * @Groups({"invader:read", "invader:collection:read"})
+     * @Groups({"image:read", "invader:read", "invader:collection:read"})
      */
     private $id;
 
@@ -40,7 +79,7 @@ class Image
     /**
      * @var string|null
      *
-     * @Groups({"invader:read", "invader:collection:read"})
+     * @Groups({"image:read", "invader:read", "invader:collection:read"})
      */
     private $fileUrl;
 
@@ -60,7 +99,7 @@ class Image
         return $this->filename;
     }
 
-    public function setFilename(string $filename): self
+    public function setFilename(?string $filename): self
     {
         $this->filename = $filename;
 

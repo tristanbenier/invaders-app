@@ -1,3 +1,10 @@
+/* Fonts */
+
+@font-face {
+  font-family: Uni;
+  src: url('/fonts/uni0553.ttf');
+}
+
 /* Layout */
 
 $header_height: 56px;
@@ -10,6 +17,7 @@ html {
 body {
   font-family: arial;
   font-weight: 100;
+  font-family: Uni;
 }
 
 *,
@@ -26,4 +34,11 @@ body {
 .btn.focus,
 .btn:focus {
   box-shadow: none;
+}
+
+.btn {
+  &.btn-xs {
+    padding: 0.125rem 0.25rem;
+    font-size: 0.625rem;
+  }
 }

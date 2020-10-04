@@ -24,7 +24,7 @@ class ApiClient {
     });
   }
 
-  get (url, params = {}, headers) {
+  get (url, params = {}, headers = {}) {
     const urlWithParams = UrlUtils.addQueryParams(url, params);
     this.log('GET', urlWithParams);
     return this.axios.get(urlWithParams, { headers })
@@ -33,7 +33,7 @@ class ApiClient {
     ;
   }
 
-  post (url, data, headers, responseType) {
+  post (url, data, headers = {}, responseType = null) {
     const config = headers ? { headers } : {};
     if (responseType) {
       config.responseType = responseType;
@@ -45,7 +45,7 @@ class ApiClient {
     ;
   }
 
-  put (url, data, headers) {
+  put (url, data, headers = {}) {
     const config = headers ? { headers } : {};
     this.log('PUT', url);
     return this.axios.put(url, data, config)

@@ -36,8 +36,8 @@ class ResourceService {
     ;
   }
 
-  updateOne (id, params) {
-    return this.apiClient.put(`${this.baseUrl}/${id}`, params)
+  updateOne (id, params, headers) {
+    return this.apiClient.put(`${this.baseUrl}/${id}`, params, headers)
       .catch((err) => {
         if (err.message) { throw err; }
         throw new Error(`Impossible to update ${this.resourceName} 😞`);

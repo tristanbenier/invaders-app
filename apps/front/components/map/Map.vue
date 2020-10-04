@@ -1,15 +1,20 @@
 <template>
-  <GmapMap
-    ref="map"
-    :center="mapCenter"
-    :zoom="mapZoom"
-    @center_changed="onMapCenterChanged"
-    @zoom_changed="onMapZoomChanged"
-  >
-    <Markers @click-invader="onInvaderClick" />
+  <div id="map">
+    <GmapMap
+      ref="map"
+      :center="mapCenter"
+      :zoom="mapZoom"
+      :options="mapOptions"
+      @center_changed="onMapCenterChanged"
+      @zoom_changed="onMapZoomChanged"
+    >
+      <Markers @click-invader="onInvaderClick" />
+    </GmapMap>
 
-    <InvaderModal />
-  </GmapMap>
+    <InvaderModal
+      @close="onInvaderModalClose"
+    />
+  </div>
 </template>
 
 <script>
@@ -25,7 +30,12 @@ export default {
     return {
       mapCenter: null,
       mapZoom: null,
+      mapOptions: null,
     };
+  },
+  computed: {
+    mapModes () { return this.$store.getters['map/modes']; },
+    mapMode () { return this.$store.getters['map/selectedMode']; },
   },
   beforeMount () {
     this.$fetch();
@@ -48,6 +58,10 @@ export default {
         lng: mapCenterLng,
       };
       this.mapZoom = mapConfig.zoom || 1;
+      this.mapOptions = {
+        mapTypeControl: false,
+        streetViewControl: false,
+      };
     },
     updateLocalMapConfig (data = {}) {
       const mapConfig = {
@@ -57,14 +71,25 @@ export default {
       this.$storage.set('map-config', JSON.stringify(mapConfig));
     },
     onInvaderClick (invader) {
-      this.$bvModal.show('invader-modal');
-      console.log('click on invader');
-      console.log(invader);
+      if (this.mapMode === this.mapModes.SHOW_INVADERS || this.mapMode === this.mapModes.SHOW_INVADER) {
+        this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADER);
+        this.$store.commit('map/SET_SELECTED_INVADER_ID', invader.id);
+        this.$bvModal.show('invader-modal');
+      }
+    },
+    onInvaderModalClose () {
+      this.$bvModal.hide('invader-modal');
+      if (this.mapMode !== this.mapModes.ADD_INVADER) {
+        this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADERS);
+      }
     },
   },
 };
 </script>
 
 <style lang="scss">
-
+#map {
+  width: 100%;
+  height: 100%;
+}
 </style>

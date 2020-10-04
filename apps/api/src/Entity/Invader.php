@@ -49,16 +49,22 @@ class Invader
 
     /**
      * @ORM\Column(type="string", length=255)
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
      */
     private $address1;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
      */
     private $address2;
 
     /**
      * @ORM\Column(type="string", length=10, nullable=true)
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
      */
     private $zipcode;
 
@@ -72,6 +78,8 @@ class Invader
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
      */
     private $comment;
 

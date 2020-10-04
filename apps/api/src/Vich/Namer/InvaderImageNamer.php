@@ -27,17 +27,12 @@ class InvaderImageNamer implements NamerInterface, ConfigurableInterface
      */
     public function name($object, PropertyMapping $mapping): string
     {
-        // /** @var UploadedFile $file */
-        // $file = $mapping->getFile($object);
-        // $invader = $file->getInvader();
+        $invader = $object->getInvader();
+        $invaderName = $invader->getName();
 
-        // $extension = $file->getClientOriginalExtension();
-        // $filename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        // // $name = Tools::slugify($filename);
-
-        // if ($this->transliterate) {
-        //     $name = Transliterator::transliterate($name);
-        // }
+        if ($invaderName) {
+            return sprintf('%s_%s.jpg', $invaderName, uniqid());
+        }
 
         return uniqid() . '.jpg';
     }

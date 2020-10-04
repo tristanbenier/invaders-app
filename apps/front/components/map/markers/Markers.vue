@@ -28,9 +28,6 @@ export default {
   components: { InvaderMarker },
   // components: { InvaderMarker, GeolocationMarker, PlaceMarker },
   computed: {
-    invaders () {
-      return this.$store.getters['data/invaders'];
-    },
     filteredInvaders () {
       return this.$store.getters['invaders/invadersList'];
       // return this.$store.getters['map/filteredInvaders'];

@@ -3,8 +3,11 @@ import Vue from 'vue';
 
 import Invader from '@/entities/Invader';
 import InvadersService from '@/services/api/InvadersService';
+import ImagesService from '@/services/api/ImagesService';
 import ArrayUtils from '@/lib/utils/array';
+import ObjectUtils from '@/lib/utils/object';
 import CacheUtils from '@/lib/utils/cache';
+import Image from '~/entities/Image';
 
 const initialState = {
   items: {},
@@ -23,6 +26,9 @@ export const mutations = {
   },
   SET_ITEM (state, item) {
     Vue.set(state.items, item.id, item);
+  },
+  REMOVE_ITEM (state, id) {
+    Vue.delete(state.items, id);
   },
   SET_ERROR (state, { key, error }) {
     Vue.set(state.errors, key, error);
@@ -106,9 +112,85 @@ export const actions = {
       commit('DECREASE_SEARCH_LOADING', { key: 'search' });
     }
   },
+  async updateInvader ({ commit, state }, { id, data }) {
+    let success = true;
+
+    try {
+      commit('SET_ERROR', { key: 'update', error: null });
+      commit('SET_LOADING', { key: 'update', loading: true });
+      commit('SET_LOADING', { key: `update:${id}`, loading: true });
+
+      const invader = ObjectUtils.cloneDeep(state.items[id]);
+
+      // Add new images if needed
+      const { imagesToAdd } = data;
+      if (imagesToAdd && imagesToAdd.length) {
+        const addImagesPromises = [];
+        for (let i = 0; i < imagesToAdd.length; i++) {
+          if (imagesToAdd[i]) {
+            // Add new image
+            addImagesPromises.push(
+              ImagesService.createOne({ invaderId: id, file: imagesToAdd[i] }).then((response) => {
+                invader.addImage(Image.createFromApi(response));
+              }),
+            );
+          }
+        };
+
+        await Promise.all(addImagesPromises);
+        data.imagesToAdd = undefined;
+      }
+
+      const { imagesToRemove } = data;
+      if (imagesToRemove && imagesToRemove.length) {
+        const imagesIdsToRemove = imagesToRemove.map(image => image.id);
+        data.images = invader.images
+          .filter(image => !imagesIdsToRemove.includes(image.id))
+          .map(image => image.iri)
+        ;
+      }
+
+      const response = await InvadersService.updateOne(id, data);
+      commit('SET_ITEM', Invader.createFromApi(response));
+    } catch (e) {
+      success = false;
+      commit('SET_ERROR', { key: 'update', error: e.message });
+      throw e;
+    } finally {
+      commit('SET_LOADING', { key: 'update', loading: false });
+      commit('SET_LOADING', { key: `update:${id}`, loading: false });
+    }
+
+    return success;
+  },
+  async removeInvader ({ commit }, { id }) {
+    let success = true;
+
+    try {
+      commit('SET_ERROR', { key: 'remove', error: null });
+      commit('SET_LOADING', { key: 'remove', loading: true });
+      commit('SET_LOADING', { key: `remove:${id}`, loading: true });
+
+      await InvadersService.removeOne(id);
+      commit('REMOVE_ITEM', id);
+    } catch (e) {
+      success = false;
+      commit('SET_ERROR', { key: 'remove', error: e.message });
+      throw e;
+    } finally {
+      commit('SET_LOADING', { key: 'remove', loading: false });
+      commit('SET_LOADING', { key: `remove:${id}`, loading: false });
+    }
+
+    return success;
+  },
 };
 
 export const getters = {
+  loading (state) { return key => ArrayUtils.hasElement(state.loadings, key); },
+  error (state) { return key => state.errors[key]; },
+
   invaders (state) { return state.items; },
+  invader (state) { return invaderId => state.items[invaderId] || null; },
   invadersList (state) { return Object.values(state.items); },
 };

@@ -41,6 +41,7 @@ export default {
   ** Plugins to load before mounting the App
   */
   plugins: [
+    '~/plugins/ui',
     '~/plugins/api',
     '~/plugins/local-storage',
     '~/plugins/google-maps',
@@ -86,7 +87,8 @@ export default {
     /*
     ** You can extend webpack config here
     */
-    extend (config, ctx) {
-    },
+    extend (config) {
+      config.resolve.alias['vue'] = 'vue/dist/vue.common';
+    }
   },
 };

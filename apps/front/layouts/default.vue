@@ -37,7 +37,7 @@ export default {
     position: relative;
     background-color: $grey_lighter;
     padding-top: $header_height;
-    color: $purple_dark;
+    color: $white;
     font-size: 14px;
     min-height: 100vh;
 
