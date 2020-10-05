@@ -139,7 +139,6 @@
               placeholder="Comment"
             />
           </b-form-group>
-
         </b-col>
       </b-row>
 
@@ -169,12 +168,11 @@
           <img
             :src="image"
             class="thumbnail-image"
-          />
+          >
           <b-button variant="danger" size="sm" class="mt-2 btn-xs" @click="onImageToAddRemoveClick(index)">
             Remove
           </b-button>
         </b-col>
-
       </b-row>
 
       <b-row>

@@ -11,6 +11,18 @@
       <Markers @click-invader="onInvaderClick" />
     </GmapMap>
 
+    <div v-if="mapMode === mapModes.MOVE_INVADER" id="move-invader-bar" class="text-center">
+      <span class="float-left">Save this position</span>
+
+      <b-button variant="primary" size="sm" class="float-right ml-2" @click="onInvaderMoveSave">
+        Save
+      </b-button>
+
+      <b-button variant="secondary" size="sm" class="float-right ml-2" @click="onInvaderMoveCancel">
+        Cancel
+      </b-button>
+    </div>
+
     <InvaderModal
       @close="onInvaderModalClose"
     />
@@ -79,9 +91,20 @@ export default {
     },
     onInvaderModalClose () {
       this.$bvModal.hide('invader-modal');
-      if (this.mapMode !== this.mapModes.ADD_INVADER) {
+
+      if (![this.mapModes.ADD_INVADER, this.mapModes.MOVE_INVADER].includes(this.mapMode)) {
         this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADERS);
       }
+    },
+    onInvaderMoveCancel () {
+      this.$root.$emit('map::move-invader::cancel');
+      this.$bvModal.show('invader-modal');
+      this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADER);
+    },
+    onInvaderMoveSave () {
+      this.$root.$emit('map::move-invader::save');
+      this.$bvModal.show('invader-modal');
+      this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADER);
     },
   },
 };
@@ -91,5 +114,22 @@ export default {
 #map {
   width: 100%;
   height: 100%;
+
+  #move-invader-bar {
+    position: absolute;
+    bottom: 5px;
+    height: 50px;
+    left: 10%;
+    width: 80%;
+    border-radius: 5px;
+    line-height: 36px;
+    padding: 7px 15px 7px 30px;
+    background-color: $grey_darker;
+
+    @media screen and (min-width: 567px) {
+      left: 25%;
+      width: 50%;
+    }
+  }
 }
 </style>

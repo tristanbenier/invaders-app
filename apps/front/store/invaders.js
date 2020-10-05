@@ -27,6 +27,10 @@ export const mutations = {
   SET_ITEM (state, item) {
     Vue.set(state.items, item.id, item);
   },
+  SET_ITEM_POSITION (state, { id, latitude, longitude }) {
+    Vue.set(state.items[id], 'latitude', latitude);
+    Vue.set(state.items[id], 'longitude', longitude);
+  },
   REMOVE_ITEM (state, id) {
     Vue.delete(state.items, id);
   },
@@ -55,7 +59,7 @@ export const mutations = {
 };
 
 export const actions = {
-  async fetchAll ({ state, commit }, { forceFetch = false, itemsPerPage = 5, params = {} } = {}) {
+  async fetchAll ({ state, commit }, { forceFetch = false, itemsPerPage = 100, params = {} } = {}) {
     let success = true;
     commit('SET_LOADING', { key: 'fetch', loading: true });
     commit('SET_ERROR', { key: 'fetch', error: null });
@@ -71,7 +75,7 @@ export const actions = {
           items = response.map(e => Invader.createFromApi(e));
           commit('SET_ITEMS', items);
           page++;
-        } while (page < 5 && items.length === itemsPerPage);
+        } while (page < 1 && items.length === itemsPerPage);
       }
     } catch (e) {
       console.error(e);

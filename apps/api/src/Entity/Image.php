@@ -13,8 +13,6 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Vich\UploaderBundle\Mapping\Annotation as Vich;
 
 /**
- * @ORM\Entity(repositoryClass=ImageRepository::class)
- *
  * @ApiResource(
  *     iri="http://schema.org/Image",
  *     normalizationContext={"groups"={"image:read"}},
@@ -50,9 +48,11 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
  *     }
  * )
  *
+ * @ORM\Table(name="i_image")
+ * @ORM\Entity(repositoryClass=ImageRepository::class)
+ *
  * @Vich\Uploadable
  */
-//  *             "controller"=RemoveImageAction::class
 class Image
 {
     /**

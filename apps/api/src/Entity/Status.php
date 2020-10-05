@@ -11,6 +11,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ApiResource()
+ *
+ * @ORM\Table(name="i_status")
  * @ORM\Entity(repositoryClass=StatusRepository::class)
  */
 class Status

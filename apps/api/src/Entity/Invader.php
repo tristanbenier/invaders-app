@@ -19,8 +19,8 @@ use Symfony\Component\Serializer\Annotation\Groups;
  *     itemOperations={"get", "put", "delete"}
  * )
  *
+ * @ORM\Table(name="i_invader", indexes={@ORM\Index(name="invader_name_idx", columns={"name"})})
  * @ORM\Entity(repositoryClass=InvaderRepository::class)
- * @ORM\Table(indexes={@ORM\Index(name="invader_name_idx", columns={"name"})})
  */
 class Invader
 {

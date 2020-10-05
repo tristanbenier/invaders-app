@@ -3,6 +3,7 @@
     id="invader-modal"
     :header-title="modalTitle"
     :header-actions="[
+      { icon: 'geo-alt-fill', name: 'move' },
       { icon: 'pencil', name: 'edit' },
       { icon: 'trash', name: 'remove' },
     ]"
@@ -48,6 +49,10 @@ export default {
   methods: {
     onHeaderAction (actionName) {
       switch (actionName) {
+        case 'move': {
+          this.onMoveClick();
+          break;
+        }
         case 'edit': {
           this.onEditClick();
           break;
@@ -57,6 +62,36 @@ export default {
           break;
         }
       }
+    },
+    onMoveClick () {
+      this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.MOVE_INVADER);
+
+      const clearListeners = () => {
+        this.$root.$off('map::move-invader::save');
+        this.$root.$off('map::move-invader::cancel');
+      };
+
+      // Add listeners for toolbar
+      this.$root.$on('map::move-invader::save', () => {
+        const data = {
+          latitude: this.selectedInvader.latitude,
+          longitude: this.selectedInvader.longitude,
+        };
+        this.$store.dispatch('invaders/updateInvader', {
+          id: this.selectedInvaderId,
+          data,
+        });
+        clearListeners();
+      });
+      this.$root.$on('map::move-invader::cancel', () => {
+        this.$store.commit('invaders/SET_ITEM_POSITION', {
+          id: this.selectedInvaderId,
+          ...this.selectedInvader.position,
+        });
+        clearListeners();
+      });
+
+      this.$emit('close');
     },
     onEditClick () {
       this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.EDIT_INVADER);

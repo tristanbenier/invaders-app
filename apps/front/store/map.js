@@ -3,6 +3,7 @@ import Vue from 'vue';
 const MODES = {
   SHOW_INVADERS: 'show-invaders',
   SHOW_INVADER: 'show-invader',
+  MOVE_INVADER: 'move-invader',
   ADD_INVADER: 'add-invader',
   EDIT_INVADER: 'edit-invader',
 };
@@ -44,6 +45,16 @@ export const getters = {
     if (!state.selectedInvaderId) {
       return null;
     }
+
     return rootGetters['invaders/invader'](state.selectedInvaderId);
+  },
+  displayedInvaders (state, getters, rootState, rootGetters) {
+    const invadersList = rootGetters['invaders/invadersList'];
+
+    if (state.selectedMode === state.modes.MOVE_INVADER && state.selectedInvaderId) {
+      return [getters.selectedInvader];
+    }
+
+    return invadersList;
   },
 };

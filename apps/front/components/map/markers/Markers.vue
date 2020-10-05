@@ -4,6 +4,7 @@
       v-for="(invader, index) in filteredInvaders"
       :key="index"
       :invader="invader"
+      :draggable="isInvaderDraggable(invader)"
       @click="onInvaderClick(invader)"
     />
     <!-- <PlaceMarker
@@ -28,10 +29,10 @@ export default {
   components: { InvaderMarker },
   // components: { InvaderMarker, GeolocationMarker, PlaceMarker },
   computed: {
-    filteredInvaders () {
-      return this.$store.getters['invaders/invadersList'];
-      // return this.$store.getters['map/filteredInvaders'];
-    },
+    mapModes () { return this.$store.getters['map/modes']; },
+    mapMode () { return this.$store.getters['map/selectedMode']; },
+    selectedInvaderId () { return this.$store.getters['map/selectedInvaderId']; },
+    filteredInvaders () { return this.$store.getters['map/displayedInvaders']; },
     // placeMarkerPosition () {
     //   return this.$store.getters['map/placeMarkerPosition'];
     // },
@@ -40,6 +41,9 @@ export default {
     // },
   },
   methods: {
+    isInvaderDraggable (invader) {
+      return this.mapMode === this.mapModes.MOVE_INVADER && invader.id === this.selectedInvaderId;
+    },
     onInvaderClick (invader) {
       this.$emit('click-invader', invader);
     },

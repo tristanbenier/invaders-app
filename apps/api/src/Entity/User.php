@@ -13,9 +13,12 @@ use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Serializer\Annotation\SerializedName;
 
 /**
- * @ORM\Entity(repositoryClass=UserRepository::class)
- * @UniqueEntity(fields={"email"})
  * @ApiResource()
+ *
+ * @ORM\Table(name="i_user")
+ * @ORM\Entity(repositoryClass=UserRepository::class)
+ *
+ * @UniqueEntity(fields={"email"})
  */
 class User implements UserInterface
 {

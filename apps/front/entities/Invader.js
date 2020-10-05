@@ -45,6 +45,7 @@ class Invader {
     item.status = Status.createFromApi(status);
     item.latitude = latitude;
     item.longitude = longitude;
+    item.position = { latitude, longitude };
     item.address1 = address1;
     item.address2 = address2;
     item.zipcode = zipcode;

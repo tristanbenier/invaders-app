@@ -12,10 +12,8 @@ use App\Repository\ImageRepository;
 use App\Repository\InvaderRepository;
 use App\Repository\StatusRepository;
 use App\Repository\UserRepository;
-use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -73,7 +71,7 @@ class MigrationsController extends AbstractController
         $result[self::EXISTING_STATUS] = 0;
         $result[self::SKIPPED_STATUS] = 0;
         $result[self::FAILED_STATUS] = 0;
-        $max = 500;
+        $max = 200;
         $count = 0;
 
         foreach ($invaders as $invaderData) {
@@ -101,7 +99,6 @@ class MigrationsController extends AbstractController
         // Check if invaders already exists
         $invaderName = $invaderData['name'] ?? null;
         if (!$invaderName) {
-            dump($invaderData);die();
             return self::SKIPPED_STATUS;
         }
         $invader = $this->invaderRepository->findOneBy(['name' => $invaderName]);
@@ -178,6 +175,7 @@ class MigrationsController extends AbstractController
         $storedImagesDirectoryPath = $this->getParameter('kernel.project_dir') . '/var/images';
         $destinationDirectoryPath = $this->getParameter('kernel.project_dir') . '/public/upload/images/invaders';
         foreach ($imagesData as $imageData) {
+
             $sourcePath = $storedImagesDirectoryPath . '/' . $imageData['filename'];
             $destinationPath = $destinationDirectoryPath . '/' . $imageData['filename'];
             if (file_exists($sourcePath)) {

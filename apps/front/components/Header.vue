@@ -5,7 +5,6 @@
         Invaders
         <!-- <Logo :height="20" /> -->
       </NuxtLink>
-
     </b-navbar-brand>
 
     <b-spinner v-if="loading" variant="primary" small />
