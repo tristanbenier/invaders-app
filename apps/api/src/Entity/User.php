@@ -46,9 +46,9 @@ class User implements UserInterface
     private $email;
 
     /**
-     * @ORM\Column(type="json")
+     * @ORM\Column(type="string", length=100)
      */
-    private $roles = [];
+    private $stringifiedRoles = '';
 
     /**
      * @ORM\Column(type="string")
@@ -112,18 +112,23 @@ class User implements UserInterface
         return $this;
     }
 
+    public function getStringifiedRoles(): string
+    {
+        return $this->stringifiedRoles;
+    }
+
     public function getRoles(): array
     {
-        $roles = $this->roles;
+        $roles = explode(',', $this->stringifiedRoles);
         // guarantee every user at least has ROLE_CLIENT
         $roles[] = self::ROLE_USER;
 
         return array_unique($roles);
     }
 
-    public function setRoles(array $roles): self
+    public function setRoles(array $stringifiedRoles): self
     {
-        $this->roles = $roles;
+        $this->stringifiedRoles = $stringifiedRoles;
 
         return $this;
     }
