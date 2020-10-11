@@ -85,4 +85,5 @@ export const getters = {
   cities (state) { return state.items; },
   city (state) { return cityId => state.items[cityId] || null; },
   citiesList (state) { return Object.values(state.items); },
+  cityByName (state) { return cityName => Object.values(state.items).find(c => c.name.toLowerCase() === cityName.toLowerCase()); },
 };

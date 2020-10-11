@@ -14,6 +14,7 @@ const initialState = {
   searchResults: {},
   errors: {},
   loadings: [], // This will be an array of loading elements
+  invaderToAdd: null,
 };
 
 export const state = () => ({ ...initialState });
@@ -56,6 +57,9 @@ export const mutations = {
     ArrayUtils.removeElement(loadings, key);
     Vue.set(state, 'loadings', loadings);
   },
+  SET_INVADER_TO_ADD (state, invader) {
+    Vue.set(state, 'invaderToAdd', invader);
+  },
 };
 
 export const actions = {
@@ -75,7 +79,7 @@ export const actions = {
           items = response.map(e => Invader.createFromApi(e));
           commit('SET_ITEMS', items);
           page++;
-        } while (page < 1 && items.length === itemsPerPage);
+        } while (page < 2 && items.length === itemsPerPage);
       }
     } catch (e) {
       console.error(e);
@@ -188,6 +192,81 @@ export const actions = {
 
     return success;
   },
+  async initializeInvaderToAdd ({ commit, rootGetters }, { lat, lng }) {
+    let success = true;
+
+    const invader = new Invader();
+    invader.latitude = lat;
+    invader.longitude = lng;
+
+    try {
+      commit('SET_ERROR', { key: 'add:initialize', error: null });
+      commit('SET_LOADING', { key: 'add:initialize', loading: true });
+
+      const result = await this.$geocoding.getAddressFromLatLng(lat, lng);
+      if (result.status === 200) {
+        const addressData = result.data.address;
+        const number = addressData.house_number;
+        invader.address1 = number ? `${number} ${addressData.road}` : addressData.road;
+        invader.zipcode = addressData.postcode;
+        const city = rootGetters['cities/cityByName'](addressData.city) || null;
+        if (city) {
+          invader.city = city;
+          invader.name = city.prefix;
+        }
+      }
+    } catch (e) {
+      success = false;
+      console.error(e);
+      commit('SET_ERROR', { key: 'add:initialize', error: e.message });
+    } finally {
+      commit('SET_LOADING', { key: 'add:initialize', loading: false });
+    }
+
+    commit('SET_INVADER_TO_ADD', invader);
+
+    return success;
+  },
+  async addInvader ({ commit }, { data }) {
+    let newInvaderId = null;
+
+    try {
+      commit('SET_ERROR', { key: 'add', error: null });
+      commit('SET_LOADING', { key: 'add', loading: true });
+
+      const response = await InvadersService.createOne(data);
+      const newInvader = Invader.createFromApi(response);
+      newInvaderId = newInvader.id;
+
+      // Add new images if needed
+      const { imagesToAdd } = data;
+      if (imagesToAdd && imagesToAdd.length) {
+        const addImagesPromises = [];
+        for (let i = 0; i < imagesToAdd.length; i++) {
+          if (imagesToAdd[i]) {
+            // Add new image
+            addImagesPromises.push(
+              ImagesService.createOne({ invaderId: newInvaderId, file: imagesToAdd[i] }).then((response) => {
+                newInvader.addImage(Image.createFromApi(response));
+              }),
+            );
+          }
+        };
+
+        await Promise.all(addImagesPromises);
+        data.imagesToAdd = undefined;
+      }
+
+      commit('SET_ITEM', newInvader);
+    } catch (e) {
+      commit('SET_ERROR', { key: 'add', error: e.message });
+      throw e;
+    } finally {
+      commit('SET_LOADING', { key: 'add', loading: false });
+    }
+
+    return newInvaderId;
+  },
 };
 
 export const getters = {
@@ -197,4 +276,5 @@ export const getters = {
   invaders (state) { return state.items; },
   invader (state) { return invaderId => state.items[invaderId] || null; },
   invadersList (state) { return Object.values(state.items); },
+  invaderToAdd (state) { return state.invaderToAdd; },
 };

@@ -3,6 +3,22 @@ import City from '@/entities/City';
 import Image from '@/entities/Image';
 
 class Invader {
+  constructor () {
+    this.id = null;
+    this.name = null;
+    this.points = null;
+    this.status = null;
+    this.latitude = null;
+    this.longitude = null;
+    this.address1 = null;
+    this.address2 = null;
+    this.zipcode = null;
+    this.city = null;
+    this.comment = null;
+    this.users = [];
+    this.images = null;
+  }
+
   get iri () {
     return `/invaders/${this.id}`;
   }
@@ -23,7 +39,7 @@ class Invader {
       id: this.id,
       name: this.name,
       points: this.points,
-      statusId: this.status.id,
+      statusId: (this.status && this.status.id) || null,
       latitude: this.latitude,
       longitude: this.longitude,
       address1: this.address1,

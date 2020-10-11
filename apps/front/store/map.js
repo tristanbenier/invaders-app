@@ -11,6 +11,7 @@ const MODES = {
 const initialState = {
   modes: MODES,
   selectedMode: MODES.SHOW_INVADERS,
+  zoom: 1,
   sidebarOpen: false,
   selectedInvaderId: null,
 };
@@ -20,6 +21,9 @@ export const state = () => ({ ...initialState });
 export const mutations = {
   SET_SELECTED_MODE (state, mode) {
     Vue.set(state, 'selectedMode', mode);
+  },
+  SET_ZOOM (state, zoom) {
+    Vue.set(state, 'zoom', zoom);
   },
   OPEN_SIDEBAR (state) {
     Vue.set(state, 'sidebarOpen', true);
@@ -37,6 +41,8 @@ export const actions = {};
 export const getters = {
   modes (state) { return state.modes; },
   selectedMode (state) { return state.selectedMode; },
+
+  zoom (state) { return state.zoom; },
 
   isSidebarOpen (state) { return state.sidebarOpen; },
 

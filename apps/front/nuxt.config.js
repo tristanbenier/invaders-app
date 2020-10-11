@@ -44,6 +44,7 @@ export default {
     '~/plugins/ui',
     '~/plugins/api',
     '~/plugins/local-storage',
+    '~/plugins/geocoding',
     '~/plugins/google-maps',
   ],
   /*

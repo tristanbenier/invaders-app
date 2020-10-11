@@ -22,7 +22,11 @@ export default {
   // components: { Logo },
   computed: {
     loading () {
-      return this.$store.getters['invaders/loading']('fetch');
+      return this.$store.getters['invaders/loading']('fetch') ||
+        this.$store.getters['users/loading']('fetch') ||
+        this.$store.getters['status/loading']('fetch') ||
+        this.$store.getters['cities/loading']('fetch')
+      ;
     },
   },
 };

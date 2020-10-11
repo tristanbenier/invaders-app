@@ -36,14 +36,10 @@ export default {
   .page-container {
     position: relative;
     background-color: $grey_lighter;
-    padding-top: $header_height;
+    margin-top: $header_height;
     color: $white;
     font-size: 14px;
-    min-height: 100vh;
-
-    .site-page {
-      padding-bottom: 50px;
-    }
+    min-height: calc(100vh - #{$header_height});
   }
 }
 </style>

@@ -7,20 +7,36 @@
       :options="mapOptions"
       @center_changed="onMapCenterChanged"
       @zoom_changed="onMapZoomChanged"
+      @click="onMapClick"
     >
       <Markers @click-invader="onInvaderClick" />
     </GmapMap>
 
-    <div v-if="mapMode === mapModes.MOVE_INVADER" id="move-invader-bar" class="text-center">
-      <span class="float-left">Save this position</span>
+    <div v-if="mapMode === mapModes.MOVE_INVADER || mapMode === mapModes.ADD_INVADER" id="action-bar-container" class="text-center">
+      <div v-if="mapMode === mapModes.MOVE_INVADER">
+        <span class="float-left">Save this position</span>
 
-      <b-button variant="primary" size="sm" class="float-right ml-2" @click="onInvaderMoveSave">
-        Save
-      </b-button>
+        <b-button variant="primary" size="sm" class="float-right ml-2" @click="onInvaderMoveSave">
+          Save
+        </b-button>
 
-      <b-button variant="secondary" size="sm" class="float-right ml-2" @click="onInvaderMoveCancel">
-        Cancel
-      </b-button>
+        <b-button variant="secondary" size="sm" class="float-right ml-2" @click="onInvaderMoveCancel">
+          Cancel
+        </b-button>
+      </div>
+      <div v-if="mapMode === mapModes.ADD_INVADER">
+        <span class="float-left"> Add position</span>
+
+        <b-button variant="secondary" size="sm" class="float-right ml-2" @click="onInvaderAddCancel">
+          Cancel
+        </b-button>
+      </div>
+    </div>
+
+    <div id="toolbar-container">
+      <Toolbar
+        @add-invader="onInvaderAddClick"
+      />
     </div>
 
     <InvaderModal
@@ -30,35 +46,49 @@
 </template>
 
 <script>
+import Toolbar from '@/components/map/toolbar/Toolbar';
 import Markers from '@/components/map/markers/Markers';
 import InvaderModal from '@/components/map/modals/InvaderModal';
 
 export default {
-  components: { Markers, InvaderModal },
+  components: { Toolbar, Markers, InvaderModal },
   fetch () {
+    this.$store.dispatch('users/fetchAll');
+    this.$store.dispatch('cities/fetchAll');
     this.$store.dispatch('invaders/fetchAll');
+    this.$store.dispatch('status/fetchAll');
   },
   data () {
     return {
       mapCenter: null,
-      mapZoom: null,
       mapOptions: null,
     };
   },
   computed: {
     mapModes () { return this.$store.getters['map/modes']; },
     mapMode () { return this.$store.getters['map/selectedMode']; },
+    mapZoom () { return this.$store.getters['map/zoom']; },
   },
   beforeMount () {
     this.$fetch();
     this.loadLocalMapConfig();
   },
   methods: {
+    async onMapClick (e) {
+      if (this.mapMode === this.mapModes.ADD_INVADER) {
+        const lat = e.latLng.lat();
+        const lng = e.latLng.lng();
+
+        await this.$store.dispatch('invaders/initializeInvaderToAdd', { lat, lng });
+        this.$bvModal.show('invader-modal');
+      }
+    },
     onMapCenterChanged (mapCenter) {
       const center = { lat: mapCenter.lat(), lng: mapCenter.lng() };
       this.updateLocalMapConfig({ center });
     },
     onMapZoomChanged (zoom) {
+      this.$store.commit('map/SET_ZOOM', zoom);
       this.updateLocalMapConfig({ zoom });
     },
     loadLocalMapConfig () {
@@ -69,8 +99,9 @@ export default {
         lat: mapCenterLat,
         lng: mapCenterLng,
       };
-      this.mapZoom = mapConfig.zoom || 1;
+      this.$store.commit('map/SET_ZOOM', mapConfig.zoom || 1);
       this.mapOptions = {
+        fullscreenControl: false,
         mapTypeControl: false,
         streetViewControl: false,
       };
@@ -92,7 +123,8 @@ export default {
     onInvaderModalClose () {
       this.$bvModal.hide('invader-modal');
 
-      if (![this.mapModes.ADD_INVADER, this.mapModes.MOVE_INVADER].includes(this.mapMode)) {
+      if (![this.mapModes.MOVE_INVADER].includes(this.mapMode)) {
+        this.$store.commit('map/SET_SELECTED_INVADER_ID', null);
         this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADERS);
       }
     },
@@ -106,6 +138,12 @@ export default {
       this.$bvModal.show('invader-modal');
       this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADER);
     },
+    onInvaderAddClick () {
+      this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.ADD_INVADER);
+    },
+    onInvaderAddCancel () {
+      this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADERS);
+    },
   },
 };
 </script>
@@ -115,7 +153,13 @@ export default {
   width: 100%;
   height: 100%;
 
-  #move-invader-bar {
+  #toolbar-container {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+  }
+
+  #action-bar-container {
     position: absolute;
     bottom: 5px;
     height: 50px;

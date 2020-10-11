@@ -92,15 +92,15 @@ export default {
 <style lang="scss">
 .ui-modal {
   .modal-dialog {
-    margin: 70px auto 0;
-    width: 100%;
+    margin: 20px auto 0;
+    width: 96%;
     max-width: 576px;
 
     .modal-content {
       border: 0;
-      border-radius: 4px;
-      box-shadow: 0 0 2px $grey_darker;
+      border-radius: 5px;
       background-color: $grey_darker;
+      box-shadow: 0 0 1px $grey_lighter;
       color: $grey_lighter;
       margin-bottom: 40px;
 
@@ -109,7 +109,7 @@ export default {
         text-transform: uppercase;
         font-weight: bold;
         margin-left: 10px;
-        margin-right: 0px;
+        margin-right: 10px;
         border-bottom: 1px solid $grey_dark;
         padding: 10px;
 
