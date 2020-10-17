@@ -36,13 +36,18 @@ export default {
   /*
   ** Router
    */
-  router: {},
+  router: {
+    middleware: 'authenticated',
+  },
   /*
   ** Plugins to load before mounting the App
   */
   plugins: [
+    '~/plugins/token-manager',
+    '~/plugins/cookies-manager',
     '~/plugins/ui',
     '~/plugins/api',
+    '~/plugins/auth',
     '~/plugins/local-storage',
     '~/plugins/geocoding',
     '~/plugins/google-maps',

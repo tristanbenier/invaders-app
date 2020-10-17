@@ -1,4 +1,10 @@
+import console from 'console';
+
 class LocalStorageService {
+  constructor () {
+    console.info('[local-storage] Initiated');
+  }
+
   get (key) {
     return localStorage.getItem(key);
   }

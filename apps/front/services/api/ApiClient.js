@@ -22,6 +22,8 @@ class ApiClient {
       }
       return config;
     });
+
+    console.info('[api-client] Initiated');
   }
 
   get (url, params = {}, headers = {}) {
@@ -65,7 +67,7 @@ class ApiClient {
 
   log (method, url) {
     if (this.logger) {
-      console.log(`[api-client] ${method.toUpperCase()} ${url}`);
+      console.info(`[api-client] ${method.toUpperCase()} ${url}`);
     }
   }
 };

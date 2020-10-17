@@ -40,6 +40,10 @@
       >
         My account
       </NuxtLink>
+
+      <b-button variant="primary" @click="$emit('logout')">
+        Log out
+      </b-button>
     </div>
   </b-modal>
 </template>

@@ -2,7 +2,10 @@
   <div class="default-layout-container">
     <Header @open-nav="onNavOpenClick" />
 
-    <Nav @close-nav="onNavCloseClick" />
+    <Nav
+      @logout="onLogoutClick"
+      @close-nav="onNavCloseClick"
+    />
 
     <div class="page-container">
       <Nuxt />
@@ -22,6 +25,10 @@ export default {
     },
     onNavCloseClick () {
       this.$bvModal.hide('nav-modal');
+    },
+    onLogoutClick () {
+      this.$store.dispatch('auth/logout');
+      this.$router.push({ name: 'login' });
     },
   },
 };
