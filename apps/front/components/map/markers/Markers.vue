@@ -7,11 +7,11 @@
       :draggable="isInvaderDraggable(invader)"
       @click="onInvaderClick(invader)"
     />
-    <!-- <PlaceMarker
-      v-if="placeMarkerPosition"
-      :position="placeMarkerPosition"
+    <SearchMarker
+      v-if="showSearchMarker"
+      @click="onSearchMarkerClick"
     />
-    <GeolocationMarker
+    <!-- <GeolocationMarker
       v-if="geolocationMarkerPosition"
       :position="geolocationMarkerPosition"
     /> -->
@@ -22,23 +22,22 @@
 
 import InvaderMarker from '@/components/map/markers/InvaderMarker';
 // import GeolocationMarker from '@/components/map/markers/GeolocationMarker';
-// import PlaceMarker from '@/components/map/markers/PlaceMarker';
+import SearchMarker from '@/components/map/markers/SearchMarker';
 
 export default {
   name: 'Markers',
-  components: { InvaderMarker },
-  // components: { InvaderMarker, GeolocationMarker, PlaceMarker },
+  components: { InvaderMarker, SearchMarker },
   computed: {
     mapModes () { return this.$store.getters['map/modes']; },
     mapMode () { return this.$store.getters['map/selectedMode']; },
     selectedInvaderId () { return this.$store.getters['map/selectedInvaderId']; },
     filteredInvaders () { return this.$store.getters['map/displayedInvaders']; },
-    // placeMarkerPosition () {
-    //   return this.$store.getters['map/placeMarkerPosition'];
-    // },
     // geolocationMarkerPosition () {
     //   return this.$store.getters['map/geolocationMarkerPosition'];
     // },
+    showSearchMarker () {
+      return this.mapMode === this.mapModes.SEARCH_POSITION;
+    },
   },
   methods: {
     isInvaderDraggable (invader) {
@@ -46,6 +45,9 @@ export default {
     },
     onInvaderClick (invader) {
       this.$emit('click-invader', invader);
+    },
+    onSearchMarkerClick () {
+      this.$emit('click-search-marker');
     },
   },
 };

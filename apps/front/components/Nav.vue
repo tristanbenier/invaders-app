@@ -4,6 +4,7 @@
     no-fade
     hide-header-close
     hide-backdrop
+    hide-footer
     :modal-class="['nav-container']"
   >
     <template v-slot:modal-title>
@@ -68,10 +69,12 @@ $nav_footer_height: 50px;
   background-color: $grey_darker;
 
   .modal-dialog {
+    height: 100%;
     margin: 0;
     max-width: 100%;
 
     .modal-content {
+      height: 100%;
       border: none;
       background: none;
 
@@ -90,7 +93,7 @@ $nav_footer_height: 50px;
 
       .modal-body {
         width: 100%;
-        height: calc(100vh - #{$nav_footer_height} - #{$nav_header_height});
+        height: 100%;
         max-width: 300px;
         margin: 0 auto;
         padding: 0;

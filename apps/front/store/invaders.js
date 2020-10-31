@@ -63,7 +63,7 @@ export const mutations = {
 };
 
 export const actions = {
-  async fetchAll ({ state, commit }, { forceFetch = false, itemsPerPage = 100, params = {} } = {}) {
+  async fetchAll ({ state, commit }, { forceFetch = false, itemsPerPage = 200, params = {} } = {}) {
     let success = true;
     commit('SET_LOADING', { key: 'fetch', loading: true });
     commit('SET_ERROR', { key: 'fetch', error: null });
@@ -91,7 +91,7 @@ export const actions = {
 
     return success;
   },
-  async search ({ commit, state }, { forceSearch = false, itemsPerPage = 100, page = 1, filters = {} }) {
+  async search ({ commit, state }, { forceSearch = false, itemsPerPage = 200, page = 1, filters = {} }) {
     commit('INCREASE_SEARCH_LOADING');
     commit('SET_ERROR', { key: 'search', error: null });
 

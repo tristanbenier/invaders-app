@@ -49,6 +49,26 @@
         </b-col>
       </b-row>
 
+      <b-row class="mb-3">
+        <b-col>
+          <div>
+            <label>
+              Status
+            </label>
+          </div>
+
+          <b-badge
+            v-for="points in pointsOptions"
+            :key="points"
+            class="points-item m-1 px-2 py-1"
+            :variant="points === localData.points ? 'primary': 'secondary'"
+            @click="localData.points = points"
+          >
+            {{ points }}
+          </b-badge>
+        </b-col>
+      </b-row>
+
       <b-row>
         <b-col>
           <b-form-group
@@ -237,6 +257,7 @@ export default {
       localData: null,
       selectedImage: null,
       imagesToAddDataUrls: [],
+      pointsOptions: Invader.POINTS,
     };
   },
   computed: {
@@ -368,7 +389,8 @@ export default {
 
 <style lang="scss" scoped>
 .user-item,
-.status-item {
+.status-item,
+.points-item {
   cursor: pointer;
 }
 #image-input {

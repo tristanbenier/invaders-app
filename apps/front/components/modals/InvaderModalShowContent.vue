@@ -10,7 +10,7 @@
       </b-col>
     </b-row>
 
-    <b-row class="invader-address">
+    <b-row class="invader-address mt-3">
       <b-col>
         <div>
           {{ invader.address1 }}

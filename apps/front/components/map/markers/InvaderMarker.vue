@@ -32,9 +32,9 @@ export default {
     backgroundColor () {
       if (this.invader.users.length) {
         if (this.invader.users.length === 1) {
-          return '#ff0000';
+          return this.invader.users[0].color;
         }
-        return '#28ab22';
+        return '#13931c';
       }
       return this.invader.status.color;
     },

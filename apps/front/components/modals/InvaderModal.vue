@@ -8,19 +8,19 @@
     @close="$emit('close')"
   >
     <InvaderModalAddContent
-      v-if="mapMode === mapModes.ADD_INVADER"
+      v-if="displayInvaderAddContent"
       :invader="invaderToAdd"
       @cancel="onAddCancel"
       @add="onAdd"
     />
 
     <InvaderModalShowContent
-      v-if="mapMode === mapModes.SHOW_INVADER"
+      v-if="displayInvaderShowContent"
       :invader="selectedInvader"
     />
 
     <InvaderModalEditContent
-      v-if="mapMode === mapModes.EDIT_INVADER"
+      v-if="displayInvaderEditContent"
       :invader="selectedInvader"
       @edit="onEdit"
       @cancel="onEditCancel"
@@ -29,36 +29,57 @@
 </template>
 
 <script>
-import InvaderModalShowContent from '@/components/map/modals/InvaderModalShowContent';
-import InvaderModalEditContent from '@/components/map/modals/InvaderModalEditContent';
-import InvaderModalAddContent from '@/components/map/modals/InvaderModalAddContent';
+import InvaderModalShowContent from '@/components/modals/InvaderModalShowContent';
+import InvaderModalEditContent from '@/components/modals/InvaderModalEditContent';
+import InvaderModalAddContent from '@/components/modals/InvaderModalAddContent';
 
 export default {
   components: { InvaderModalShowContent, InvaderModalEditContent, InvaderModalAddContent },
   computed: {
     mapModes () { return this.$store.getters['map/modes']; },
     mapMode () { return this.$store.getters['map/selectedMode']; },
-    invaderToAdd () { return this.$store.getters['invaders/invaderToAdd']; },
-    selectedInvaderId () { return this.$store.getters['map/selectedInvaderId']; },
-    selectedInvader () { return this.$store.getters['map/selectedInvader']; },
+    displayInvaderAddContent () {
+      return this.mapMode === this.mapModes.ADD_INVADER;
+    },
+    displayInvaderShowContent () {
+      return this.$route.name === 'gallery' || this.mapMode === this.mapModes.SHOW_INVADER;
+    },
+    displayInvaderEditContent () {
+      return this.$route.name === 'index' && this.mapMode === this.mapModes.EDIT_INVADER;
+    },
+    invaderToAdd () {
+      return this.$route.name === 'index' && this.$store.getters['invaders/invaderToAdd'];
+    },
+    selectedInvaderId () {
+      return this.$store.getters['map/selectedInvaderId'];
+    },
+    selectedInvader () {
+      return this.$store.getters['map/selectedInvader'];
+    },
     modalTitle () {
       if (this.selectedInvader) {
-        return this.selectedInvader.name;
-      } else if (this.mapMode === this.mapModes.ADD_INVADER) {
+        return `${this.selectedInvader.name} > ${this.selectedInvader.points} pts`;
+      } else if (this.$route.name === 'index' && this.mapMode === this.mapModes.ADD_INVADER) {
         return 'Add invader';
       }
 
       return '';
     },
     modalHeaderActions () {
-      if (this.mapMode === this.mapModes.SHOW_INVADER) {
+      if (this.$route.name === 'index') {
+        if (this.mapMode === this.mapModes.SHOW_INVADER) {
+          return [
+            { icon: 'pencil', name: 'map-edit' },
+          ];
+        } else if (this.mapMode === this.mapModes.EDIT_INVADER) {
+          return [
+            { icon: 'geo-alt-fill', name: 'map-move' },
+            { icon: 'trash', name: 'map-remove' },
+          ];
+        }
+      } else if (this.$route.name === 'gallery') {
         return [
-          { icon: 'pencil', name: 'edit' },
-        ];
-      } else if (this.mapMode === this.mapModes.EDIT_INVADER) {
-        return [
-          { icon: 'geo-alt-fill', name: 'move' },
-          { icon: 'trash', name: 'remove' },
+          { icon: 'geo-alt-fill', name: 'gallery-show' },
         ];
       }
 
@@ -68,21 +89,25 @@ export default {
   methods: {
     onHeaderAction (actionName) {
       switch (actionName) {
-        case 'move': {
-          this.onMoveClick();
+        case 'map-move': {
+          this.onMapMoveClick();
           break;
         }
-        case 'edit': {
-          this.onEditClick();
+        case 'map-edit': {
+          this.onMapEditClick();
           break;
         }
-        case 'remove': {
-          this.onRemoveClick();
+        case 'map-remove': {
+          this.onMapRemoveClick();
+          break;
+        }
+        case 'gallery-show': {
+          this.onGalleryShowClick();
           break;
         }
       }
     },
-    onMoveClick () {
+    onMapMoveClick () {
       this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.MOVE_INVADER);
 
       const clearListeners = () => {
@@ -112,11 +137,17 @@ export default {
 
       this.$emit('close');
     },
-    onEditClick () {
+    onMapEditClick () {
       this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.EDIT_INVADER);
     },
     onEditCancel () {
       this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADER);
+    },
+    onGalleryShowClick () {
+      const { lat, lng } = this.selectedInvader.coordinates;
+      this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADERS);
+      this.$router.push({ name: 'index', hash: `#lat=${lat}&lng=${lng}&zoom=20` });
+      this.$emit('close');
     },
     async onEdit ({ formData }) {
       if (this.selectedInvaderId) {
@@ -125,7 +156,7 @@ export default {
         }
       }
     },
-    async onRemoveClick () {
+    async onMapRemoveClick () {
       if (await this.$bvModal.msgBoxConfirm('Do you really want to remove this invader ?')) {
         if (await this.$store.dispatch('invaders/removeInvader', { id: this.selectedInvaderId })) {
           this.$emit('close');

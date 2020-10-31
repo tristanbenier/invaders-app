@@ -11,7 +11,7 @@ security:
                 property: email
 
     role_hierarchy:
-        ROLE_ADMIN:      [ROLE_USER, ROLE_API_USER]
+        ROLE_ADMIN: [ROLE_USER, ROLE_API_USER]
 
     firewalls:
         dev:
@@ -45,4 +45,4 @@ security:
     # Note: Only the *first* access control that matches will be used
     access_control:
         - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/, roles: [IS_AUTHENTICATED_ANONYMOUSLY, IS_AUTHENTICATED_FULLY] }
+        - { path: ^/, roles: [IS_AUTHENTICATED_FULLY] }

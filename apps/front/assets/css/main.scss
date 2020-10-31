@@ -9,8 +9,13 @@
 
 $header_height: 56px;
 
-html {
+html,
+body,
+#__nuxt,
+#__layout {
   height: 100%;
+}
+html {
   box-sizing: border-box;
 }
 
@@ -18,6 +23,11 @@ body {
   font-family: arial;
   font-weight: 100;
   font-family: Uni;
+}
+
+h1 {
+  color: $grey_dark;
+  font-size: 25px;
 }
 
 *,

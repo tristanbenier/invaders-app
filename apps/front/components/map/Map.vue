@@ -9,7 +9,10 @@
       @zoom_changed="onMapZoomChanged"
       @click="onMapClick"
     >
-      <Markers @click-invader="onInvaderClick" />
+      <Markers
+        @click-invader="onInvaderClick"
+        @click-search-marker="onSearchMarkerClick"
+      />
     </GmapMap>
 
     <div v-if="mapMode === mapModes.MOVE_INVADER || mapMode === mapModes.ADD_INVADER" id="action-bar-container" class="text-center">
@@ -36,22 +39,22 @@
     <div id="toolbar-container">
       <Toolbar
         @add-invader="onInvaderAddClick"
+        @click-search="onSearchClick"
+        @click-search-suggestion="onSearchSuggestionClick"
+        @clear-search="onSearchClear"
       />
     </div>
-
-    <InvaderModal
-      @close="onInvaderModalClose"
-    />
   </div>
 </template>
 
 <script>
+import UrlUtils from '@/lib/utils/url';
+
 import Toolbar from '@/components/map/toolbar/Toolbar';
 import Markers from '@/components/map/markers/Markers';
-import InvaderModal from '@/components/map/modals/InvaderModal';
 
 export default {
-  components: { Toolbar, Markers, InvaderModal },
+  components: { Toolbar, Markers },
   fetch () {
     this.$store.dispatch('users/fetchAll');
     this.$store.dispatch('cities/fetchAll');
@@ -60,27 +63,26 @@ export default {
   },
   data () {
     return {
-      mapCenter: null,
+      // mapCenter: null,
       mapOptions: null,
     };
   },
   computed: {
     mapModes () { return this.$store.getters['map/modes']; },
     mapMode () { return this.$store.getters['map/selectedMode']; },
+    mapCenter () { return this.$store.getters['map/center']; },
     mapZoom () { return this.$store.getters['map/zoom']; },
   },
   beforeMount () {
     this.$fetch();
-    this.loadLocalMapConfig();
+    this.loadMapConfig();
   },
   methods: {
-    async onMapClick (e) {
+    onMapClick (e) {
       if (this.mapMode === this.mapModes.ADD_INVADER) {
         const lat = e.latLng.lat();
         const lng = e.latLng.lng();
-
-        await this.$store.dispatch('invaders/initializeInvaderToAdd', { lat, lng });
-        this.$bvModal.show('invader-modal');
+        this.onInvaderAdd({ lat, lng });
       }
     },
     onMapCenterChanged (mapCenter) {
@@ -91,19 +93,19 @@ export default {
       this.$store.commit('map/SET_ZOOM', zoom);
       this.updateLocalMapConfig({ zoom });
     },
-    loadLocalMapConfig () {
+    loadMapConfig () {
+      const hashParams = UrlUtils.getValuesFromHash(this.$route.hash);
       const mapConfig = JSON.parse(this.$storage.get('map-config') || '{}');
-      const mapCenterLat = (mapConfig.center && mapConfig.center.lat) || 0;
-      const mapCenterLng = (mapConfig.center && mapConfig.center.lng) || 0;
-      this.mapCenter = {
-        lat: mapCenterLat,
-        lng: mapCenterLng,
-      };
-      this.$store.commit('map/SET_ZOOM', mapConfig.zoom || 1);
+      const lat = (hashParams.lat && parseFloat(hashParams.lat)) || (mapConfig.center && mapConfig.center.lat) || 0;
+      const lng = (hashParams.lng && parseFloat(hashParams.lng)) || (mapConfig.center && mapConfig.center.lng) || 0;
+      const zoom = (hashParams.zoom && parseInt(hashParams.zoom)) || mapConfig.zoom || 1;
+      this.$store.commit('map/SET_CENTER', { lat, lng });
+      this.$store.commit('map/SET_ZOOM', zoom);
       this.mapOptions = {
         fullscreenControl: false,
         mapTypeControl: false,
         streetViewControl: false,
+        gestureHandling: 'greedy',
       };
     },
     updateLocalMapConfig (data = {}) {
@@ -114,7 +116,11 @@ export default {
       this.$storage.set('map-config', JSON.stringify(mapConfig));
     },
     onInvaderClick (invader) {
-      if (this.mapMode === this.mapModes.SHOW_INVADERS || this.mapMode === this.mapModes.SHOW_INVADER) {
+      if (this.mapMode === this.mapModes.SHOW_INVADERS ||
+        this.mapMode === this.mapModes.SHOW_INVADER ||
+        this.mapMode === this.mapModes.SEARCH ||
+        this.mapMode === this.mapModes.SEARCH_POSITION
+      ) {
         this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADER);
         this.$store.commit('map/SET_SELECTED_INVADER_ID', invader.id);
         this.$bvModal.show('invader-modal');
@@ -144,6 +150,34 @@ export default {
     onInvaderAddCancel () {
       this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADERS);
     },
+    async onInvaderAdd ({ lat, lng }) {
+      await this.$store.dispatch('invaders/initializeInvaderToAdd', { lat, lng });
+      this.$bvModal.show('invader-modal');
+    },
+    onSearchClick () {
+      this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SEARCH);
+    },
+    onSearchSuggestionClick ({ lat, lng, addMarker = false }) {
+      const zoom = 18;
+      const center = { lat, lng };
+      if (addMarker) {
+        this.$store.commit('map/SET_SEARCH_MARKER_POSITION', center);
+      }
+
+      this.$store.commit('map/SET_CENTER', center);
+      this.$store.commit('map/SET_ZOOM', zoom);
+      this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SEARCH_POSITION);
+
+      this.updateLocalMapConfig({ center, zoom });
+    },
+    onSearchMarkerClick () {
+      const searchMarkerPosition = this.$store.getters['map/searchMarkerPosition'];
+      this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.ADD_INVADER);
+      this.onInvaderAdd(searchMarkerPosition);
+    },
+    onSearchClear () {
+      this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADERS);
+    },
   },
 };
 </script>
@@ -156,6 +190,7 @@ export default {
   #toolbar-container {
     position: absolute;
     top: 5px;
+    left: 5px;
     right: 5px;
   }
 

@@ -46,6 +46,13 @@ class User implements UserInterface
     private $email;
 
     /**
+     * @ORM\Column(type="string", length=30)
+     *
+     * @Groups({"invader:read", "invader:collection:read"})
+     */
+    private $color;
+
+    /**
      * @ORM\Column(type="string", length=100)
      */
     private $stringifiedRoles = '';
@@ -108,6 +115,18 @@ class User implements UserInterface
     public function setEmail(string $email): self
     {
         $this->email = $email;
+
+        return $this;
+    }
+
+    public function getColor(): ?string
+    {
+        return $this->color;
+    }
+
+    public function setColor(string $color): self
+    {
+        $this->color = $color;
 
         return $this;
     }

@@ -3,6 +3,10 @@ import City from '@/entities/City';
 import Image from '@/entities/Image';
 
 class Invader {
+  static get POINTS () {
+    return [0, 10, 20, 30, 40, 50, 100];
+  }
+
   constructor () {
     this.id = null;
     this.name = null;
@@ -57,7 +61,7 @@ class Invader {
 
     item.id = id;
     item.name = name;
-    item.points = points;
+    item.points = parseInt(points);
     item.status = Status.createFromApi(status);
     item.latitude = latitude;
     item.longitude = longitude;

@@ -142,16 +142,6 @@ export default {
       }
     }
   }
-
-  &.modal-on-top {
-    .modal-dialog {
-      margin-top: 20px;
-
-      .modal-content {
-        min-height: calc(100vh - 20px);
-      }
-    }
-  }
 }
 
 .modal-backdrop {

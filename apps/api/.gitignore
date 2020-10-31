@@ -17,3 +17,7 @@
 ###> invaders
 /public/upload/images/invaders/*
 ###< invaders
+
+###> liip/imagine-bundle ###
+/public/media/cache/
+###< liip/imagine-bundle ###
