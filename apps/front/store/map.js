@@ -18,6 +18,7 @@ const initialState = {
   sidebarOpen: false,
   selectedInvaderId: null,
   searchMarkerPosition: {},
+  filters: {},
 };
 
 export const state = () => ({ ...initialState });
@@ -46,6 +47,9 @@ export const mutations = {
     Vue.set(state.searchMarkerPosition, 'lat', lat);
     Vue.set(state.searchMarkerPosition, 'lng', lng);
   },
+  SET_FILTER (state, { key, value }) {
+    Vue.set(state.filters, key, value);
+  },
 };
 
 export const actions = {};
@@ -59,6 +63,9 @@ export const getters = {
 
   isSidebarOpen (state) { return state.sidebarOpen; },
 
+  filters (state) { return state.filters; },
+  filter (state) { return key => state.filters[key] || null; },
+
   selectedInvaderId (state) { return state.selectedInvaderId; },
   selectedInvader (state, getters, rootState, rootGetters) {
     if (!state.selectedInvaderId) {
@@ -68,13 +75,45 @@ export const getters = {
     return rootGetters['invaders/invader'](state.selectedInvaderId);
   },
   displayedInvaders (state, getters, rootState, rootGetters) {
-    const invadersList = rootGetters['invaders/invadersList'];
-
     if (state.selectedMode === state.modes.MOVE_INVADER && state.selectedInvaderId) {
       return [getters.selectedInvader];
     }
 
-    return invadersList;
+    const filters = getters.filters;
+    let filteredInvaders = rootGetters['invaders/invadersList'];
+
+    if (Object.keys(filters).length) {
+      filteredInvaders = filteredInvaders.filter((invader) => {
+        return Object.keys(filters)
+          .filter(key => !!filters[key])
+          .every((key) => {
+            const values = filters[key];
+
+            if (key === 'users') {
+              if (values.includes(0)) {
+                return invader.users.length === 0;
+              }
+
+              return values.every(userId => invader.users.map(u => u.id).includes(userId));
+            }
+
+            if (key === 'points') {
+              return values.includes(invader.points);
+            }
+
+            if (key === 'cities') {
+              return invader.city && values.includes(invader.city.id);
+            }
+
+            if (key === 'status') {
+              return invader.status && values.includes(invader.status.name);
+            }
+          })
+        ;
+      });
+    }
+
+    return filteredInvaders;
   },
   searchMarkerPosition (state) {
     return state.searchMarkerPosition;

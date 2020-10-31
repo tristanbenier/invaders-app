@@ -8,17 +8,27 @@
       />
     </div>
 
-    <div v-if="mapMode !== mapModes.SEARCH" class="toolbar-item" :style="{ fontSize: '17px' }" @click="$emit('click-search')">
-      <b-icon icon="search" />
+    <div class="toolbar-item" @click="$emit('click-filter')">
+      <b-badge
+        v-if="mapFiltersCount"
+        variant="primary"
+        class="filter-badge"
+        pill
+      >{{ mapFiltersCount }}</b-badge>
+      <b-icon icon="filter" />
     </div>
 
     <div class="toolbar-item" :style="{ fontSize: '33px' }" @click="$emit('add-invader')">
       <b-icon icon="plus" />
     </div>
 
-    <div class="toolbar-item" @click="$emit('geolocate')">
-      <b-icon icon="geo-alt-fill" />
+    <div v-if="mapMode !== mapModes.SEARCH" class="toolbar-item" :style="{ fontSize: '17px' }" @click="$emit('click-search')">
+      <b-icon icon="search" />
     </div>
+
+    <!-- <div class="toolbar-item" @click="$emit('geolocate')">
+      <b-icon icon="geo-alt-fill" />
+    </div> -->
   </div>
 </template>
 
@@ -30,6 +40,10 @@ export default {
   computed: {
     mapModes () { return this.$store.getters['map/modes']; },
     mapMode () { return this.$store.getters['map/selectedMode']; },
+    mapFiltersCount () {
+      const filters = this.$store.getters['map/filters'];
+      return Object.keys(filters).filter(key => filters[key]).length;
+    },
   },
 };
 </script>
@@ -46,7 +60,8 @@ export default {
   }
 
   .toolbar-item {
-    display: inline-block;
+    position: relative;
+    float: right;
     text-align: center;
     width: 35px;
     height: 35px;
@@ -54,10 +69,23 @@ export default {
     line-height: 30px;
     background-color: $grey_darker;
     border-radius: 5px;
-    margin: 0;
+    margin: 0 0 0 5px;
     padding: 0;
     cursor: pointer;
-    overflow: hidden;
+  }
+
+  .filter-badge {
+    font-family: sans-serif;
+    font-size: 10px;
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    top: -4px;
+    left: -4px;
+    text-align: center;
+    padding: 0;
+    line-height: 15px;
+    font-weight: 100;
   }
 }
 </style>

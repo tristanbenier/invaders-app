@@ -10,6 +10,7 @@
       @click="onMapClick"
     >
       <Markers
+        :filters="filters"
         @click-invader="onInvaderClick"
         @click-search-marker="onSearchMarkerClick"
       />
@@ -42,19 +43,31 @@
         @click-search="onSearchClick"
         @click-search-suggestion="onSearchSuggestionClick"
         @clear-search="onSearchClear"
+        @click-filter="onFilterClick"
       />
     </div>
+
+    <FiltersModal
+      :filters="filters"
+      :filter-values="mapFilters"
+      @click-filter-choice="onFilterUpdate"
+      @clear-filters="onFiltersClear"
+    />
   </div>
 </template>
 
 <script>
 import UrlUtils from '@/lib/utils/url';
 
+import FiltersMixin from '@/mixins/FiltersMixin';
+
+import FiltersModal from '@/components/modals/FiltersModal';
 import Toolbar from '@/components/map/toolbar/Toolbar';
 import Markers from '@/components/map/markers/Markers';
 
 export default {
-  components: { Toolbar, Markers },
+  components: { Toolbar, Markers, FiltersModal },
+  mixins: [FiltersMixin],
   fetch () {
     this.$store.dispatch('users/fetchAll');
     this.$store.dispatch('cities/fetchAll');
@@ -63,7 +76,6 @@ export default {
   },
   data () {
     return {
-      // mapCenter: null,
       mapOptions: null,
     };
   },
@@ -72,6 +84,8 @@ export default {
     mapMode () { return this.$store.getters['map/selectedMode']; },
     mapCenter () { return this.$store.getters['map/center']; },
     mapZoom () { return this.$store.getters['map/zoom']; },
+    mapFilters () { return this.$store.getters['map/filters']; },
+    filterValues () { return this.mapFilters; }, // Used in FiltersMixin
   },
   beforeMount () {
     this.$fetch();
@@ -99,6 +113,8 @@ export default {
       const lat = (hashParams.lat && parseFloat(hashParams.lat)) || (mapConfig.center && mapConfig.center.lat) || 0;
       const lng = (hashParams.lng && parseFloat(hashParams.lng)) || (mapConfig.center && mapConfig.center.lng) || 0;
       const zoom = (hashParams.zoom && parseInt(hashParams.zoom)) || mapConfig.zoom || 1;
+      UrlUtils.removeHashKeys(['lat', 'lng', 'zoom']);
+
       this.$store.commit('map/SET_CENTER', { lat, lng });
       this.$store.commit('map/SET_ZOOM', zoom);
       this.mapOptions = {
@@ -177,6 +193,25 @@ export default {
     },
     onSearchClear () {
       this.$store.commit('map/SET_SELECTED_MODE', this.mapModes.SHOW_INVADERS);
+    },
+    onFilterClick () {
+      this.$bvModal.show('filters-modal');
+    },
+    updateFilterValuesFromHash () {
+      const hashParams = UrlUtils.getValuesFromHash(this.$route.hash);
+      Object.keys(this.filters).forEach((key) => {
+        if (!hashParams[key]) {
+          this.$store.commit('map/SET_FILTER', { key, value: null });
+          // this.filters[key].value = null;
+        } else {
+          const value = hashParams[key]
+            .split(',')
+            .map(v => ['points', 'cities', 'users'].includes(key) ? parseInt(v) : v)
+          ;
+          this.$store.commit('map/SET_FILTER', { key, value });
+          // this.filters[key].value = value;
+        }
+      });
     },
   },
 };

@@ -7,6 +7,7 @@
       :draggable="isInvaderDraggable(invader)"
       @click="onInvaderClick(invader)"
     />
+
     <SearchMarker
       v-if="showSearchMarker"
       @click="onSearchMarkerClick"
@@ -26,6 +27,12 @@ import SearchMarker from '@/components/map/markers/SearchMarker';
 
 export default {
   name: 'Markers',
+  props: {
+    filters: {
+      type: Object,
+      default: () => ({}),
+    },
+  },
   components: { InvaderMarker, SearchMarker },
   computed: {
     mapModes () { return this.$store.getters['map/modes']; },
