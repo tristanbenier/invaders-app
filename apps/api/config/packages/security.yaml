@@ -18,6 +18,10 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
 
+        images:
+            pattern: ^/media/cache/resolve/
+            security: false
+
         login:
             pattern:  ^/login
             stateless: true

@@ -176,7 +176,7 @@
         <b-col v-for="image in localData.images" :key="image.id" cols="3" class="mt-1 text-center">
           <UiBlurImageLoader
             :src="image.url"
-            :small-src="image.url"
+            :small-src="image.thumbnailUrl"
             class="thumbnail-image"
           />
           <b-button variant="danger" size="sm" class="mt-2 btn-xs" @click="onImageRemoveClick(image)">

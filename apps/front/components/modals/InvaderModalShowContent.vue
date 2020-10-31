@@ -35,7 +35,7 @@
       <div v-if="invader.images.length === 1" class="invader-image">
         <UiBlurImageLoader
           :src="invader.images[0].url"
-          :small-src="invader.images[0].url"
+          :small-src="invader.images[0].thumbnailUrl"
         />
       </div>
     </div>
@@ -72,9 +72,13 @@ export default {
   computed: {
     carouselImages () {
       if (this.invader && this.invader.images) {
+        // <img src="${image.url}">
         return this.invader.images.map(image => `
           <div class="invader-image">
-            <img src="${image.url}">
+            <UiBlurImageLoader
+              :src="${image.url}"
+              :small-src="${image.thumbnailUrl}"
+            />
           </div>`,
         );
       }

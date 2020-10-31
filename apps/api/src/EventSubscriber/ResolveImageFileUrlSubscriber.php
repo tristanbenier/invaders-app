@@ -6,6 +6,7 @@ use ApiPlatform\Core\EventListener\EventPriorities;
 use ApiPlatform\Core\Util\RequestAttributesExtractor;
 use App\Entity\Image;
 use App\Entity\Invader;
+use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Event\ViewEvent;
@@ -15,12 +16,17 @@ use Vich\UploaderBundle\Storage\StorageInterface;
 final class ResolveImageFileUrlSubscriber implements EventSubscriberInterface
 {
     /** @var StorageInterface */
-    private $storage;
+    private $vichStorage;
+
+    /** @var CacheManager */
+    private $imagineCache;
 
     public function __construct(
-        StorageInterface $storage
+        StorageInterface $vichStorage,
+        CacheManager $imagineCache
     ) {
-        $this->storage = $storage;
+        $this->vichStorage = $vichStorage;
+        $this->imagineCache = $imagineCache;
     }
 
     public static function getSubscribedEvents(): array
@@ -74,7 +80,7 @@ final class ResolveImageFileUrlSubscriber implements EventSubscriberInterface
             if (!$image instanceof Image) {
                 continue;
             }
-            $this->setImageUrl($image);
+            $this->setImageUrls($image);
         }
     }
 
@@ -83,14 +89,16 @@ final class ResolveImageFileUrlSubscriber implements EventSubscriberInterface
         $images = $invader->getImages();
 
         foreach ($images as $image) {
-            $this->setImageUrl($image);
+            $this->setImageUrls($image);
         }
     }
 
-    private function setImageUrl(Image $image): void
+    private function setImageUrls(Image $image): void
     {
-        $imageUrl = $this->storage->resolveUri($image, 'file');
+        $imageUrl = $this->vichStorage->resolveUri($image, 'file');
+        $thumbnailUrl = $this->imagineCache->getBrowserPath($imageUrl, 'invader_thumbnail');
 
         $image->setFileUrl($imageUrl);
+        $image->setThumbnailUrl($thumbnailUrl);
     }
 }

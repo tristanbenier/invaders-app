@@ -2,3 +2,23 @@
 liip_imagine:
     # valid drivers options include "gd" or "gmagick" or "imagick"
     driver: "gd"
+
+    # configure resolvers
+    resolvers:
+
+        # setup the default resolver
+        default:
+
+            # use the default web path
+            web_path:
+                cache_prefix: generated/cache
+
+    filter_sets :
+        # use the default cache configuration
+        cache : ~
+
+        invader_thumbnail:
+            format: jpeg
+            quality: 75
+            filters:
+                thumbnail:  { size: [30, 30], mode: outbound }

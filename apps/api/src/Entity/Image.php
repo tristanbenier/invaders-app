@@ -84,6 +84,13 @@ class Image
     private $fileUrl;
 
     /**
+     * @var string|null
+     *
+     * @Groups({"image:read", "invader:read", "invader:collection:read"})
+     */
+    private $thumbnailUrl;
+
+    /**
      * @ORM\ManyToOne(targetEntity=Invader::class, inversedBy="images")
      * @ORM\JoinColumn(nullable=false)
      */
@@ -126,20 +133,20 @@ class Image
         return $this->fileUrl;
     }
 
-    public function getThumbnailFileUrl(): ?string
-    {
-        $fileUrl = $this->fileUrl;
-        if ($fileUrl) {
-            $parts = explode('.', $fileUrl);
-            $extension = array_pop($parts);
-            return join('.', $parts) . '_thumb.' . $extension;
-        }
-        return $fileUrl;
-    }
-
     public function setFileUrl(string $fileUrl): self
     {
         $this->fileUrl = $fileUrl;
+
+        return $this;
+    }
+    public function getThumbnailUrl(): ?string
+    {
+        return $this->thumbnailUrl;
+    }
+
+    public function setThumbnailUrl(string $thumbnailUrl): self
+    {
+        $this->thumbnailUrl = $thumbnailUrl;
 
         return $this;
     }

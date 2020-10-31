@@ -7,11 +7,12 @@ class Image {
     return `${process.env.API_URL}${this.fileUrl}`;
   }
 
-  static createFromApi ({ id, fileUrl } = {}) {
+  static createFromApi ({ id, fileUrl, thumbnailUrl } = {}) {
     const item = new Image();
 
     item.id = id;
     item.fileUrl = fileUrl;
+    item.thumbnailUrl = thumbnailUrl;
 
     return item;
   }

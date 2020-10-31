@@ -19,5 +19,5 @@
 ###< invaders
 
 ###> liip/imagine-bundle ###
-/public/media/cache/
+/public/generated/cache/
 ###< liip/imagine-bundle ###

@@ -1,5 +1,11 @@
 <template>
   <div class="gallery-item" :style="galleryItemStyle" @click="$emit('click')">
+    <UiBlurImageLoader
+      v-if="invader.images.length"
+      :src="invader.images[0].url"
+      :small-src="invader.images[0].thumbnailUrl"
+      class="gallery-item-thumbnail"
+    />
     <div class="gallery-item-name">
       {{ invader.name }}
     </div>
@@ -20,9 +26,9 @@ export default {
     galleryItemStyle () {
       const style = {};
 
-      if (this.invader.images.length) {
-        style.backgroundImage = `url(${this.invader.images[0].url})`;
-      }
+      // if (this.invader.images.length) {
+      //   style.backgroundImage = `url(${this.invader.images[0].url})`;
+      // }
 
       return style;
     },
@@ -36,6 +42,12 @@ export default {
   background-size: cover;
   background-position: center;
   cursor: pointer;
+
+  .gallery-item-thumbnail {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
 
   .gallery-item-name {
     position: absolute;
