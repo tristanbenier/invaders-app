@@ -202,14 +202,12 @@ export default {
       Object.keys(this.filters).forEach((key) => {
         if (!hashParams[key]) {
           this.$store.commit('map/SET_FILTER', { key, value: null });
-          // this.filters[key].value = null;
         } else {
           const value = hashParams[key]
             .split(',')
             .map(v => ['points', 'cities', 'users'].includes(key) ? parseInt(v) : v)
           ;
           this.$store.commit('map/SET_FILTER', { key, value });
-          // this.filters[key].value = value;
         }
       });
     },

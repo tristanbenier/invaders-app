@@ -65,6 +65,7 @@ export const mutations = {
 export const actions = {
   async fetchAll ({ state, commit }, { forceFetch = false, itemsPerPage = 200, params = {} } = {}) {
     let success = true;
+    let doContinue = true;
     commit('SET_LOADING', { key: 'fetch', loading: true });
     commit('SET_ERROR', { key: 'fetch', error: null });
 
@@ -79,7 +80,8 @@ export const actions = {
           items = response.map(e => Invader.createFromApi(e));
           commit('SET_ITEMS', items);
           page++;
-        } while (page < 2 && items.length === itemsPerPage);
+          doContinue = (process.env.APP_ENV === 'dev' ? (page < 3) : true) && items.length === itemsPerPage; // FIXME
+        } while (doContinue);
       }
     } catch (e) {
       console.error(e);

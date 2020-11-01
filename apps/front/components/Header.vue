@@ -46,7 +46,7 @@ export default {
 
   .app-loading {
     position: absolute;
-    top: 23px;
+    top: 22px;
     right: 52px;
   }
 

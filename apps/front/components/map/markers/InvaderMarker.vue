@@ -25,6 +25,7 @@ export default {
     },
   },
   computed: {
+    users () { return this.$store.getters['users/usersList']; },
     mapZoom () { return this.$store.getters['map/zoom']; },
     size () {
       return (this.mapZoom >= 12) ? 20 : 10;
@@ -33,8 +34,9 @@ export default {
       if (this.invader.users.length) {
         if (this.invader.users.length === 1) {
           return this.invader.users[0].color;
+        } else if (this.invader.users.length === this.users.length) {
+          return '#13931c';
         }
-        return '#13931c';
       }
       return this.invader.status.color;
     },

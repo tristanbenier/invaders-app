@@ -56,6 +56,7 @@ export default {
   ** Environment variables
    */
   env: {
+    APP_ENV: process.env.APP_ENV,
     API_URL: process.env.API_URL,
     GMAP_API_KEY: process.env.GMAP_API_KEY,
   },

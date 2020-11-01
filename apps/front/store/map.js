@@ -98,7 +98,8 @@ export const getters = {
             }
 
             if (key === 'points') {
-              return values.includes(invader.points);
+              const points = invader.points || 0;
+              return values.includes(points);
             }
 
             if (key === 'cities') {

@@ -7,7 +7,7 @@
       class="gallery-item-thumbnail"
     />
     <div class="gallery-item-name">
-      {{ invader.name }}
+      {{ invader.name }} / {{ invader.points }} pts
     </div>
   </div>
 </template>
@@ -26,10 +26,6 @@ export default {
     galleryItemStyle () {
       const style = {};
 
-      // if (this.invader.images.length) {
-      //   style.backgroundImage = `url(${this.invader.images[0].url})`;
-      // }
-
       return style;
     },
   },
@@ -38,6 +34,7 @@ export default {
 
 <style lang="scss" scoped>
 .gallery-item {
+  position: relative;
   background: $grey_dark;
   background-size: cover;
   background-position: center;
@@ -52,10 +49,25 @@ export default {
   .gallery-item-name {
     position: absolute;
     width: 100%;
-    bottom: 0;
+    bottom: 4px;
     text-align: center;
     color: #fff;
     background-color: rgba($grey_darker, 0.5);
+
+    @media (min-width: 577px) {
+      font-size: 12px;
+    }
+
+    @media (min-width: 768px) {
+      font-size: 12px;
+      opacity: 0;
+    }
+  }
+
+  &:hover {
+    .gallery-item-name {
+      opacity: 1;
+    }
   }
 
   &::after {
