@@ -18,6 +18,10 @@
       <b-icon icon="filter" />
     </div>
 
+    <div class="toolbar-item" @click="$emit('geolocate')">
+      <b-icon icon="geo-fill" />
+    </div>
+
     <div class="toolbar-item" :style="{ fontSize: '33px' }" @click="$emit('add-invader')">
       <b-icon icon="plus" />
     </div>

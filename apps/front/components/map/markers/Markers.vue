@@ -12,39 +12,34 @@
       v-if="showSearchMarker"
       @click="onSearchMarkerClick"
     />
-    <!-- <GeolocationMarker
-      v-if="geolocationMarkerPosition"
-      :position="geolocationMarkerPosition"
-    /> -->
+    <GeolocationMarker
+      v-if="showGeolocationMarker"
+    />
   </div>
 </template>
 
 <script>
 
 import InvaderMarker from '@/components/map/markers/InvaderMarker';
-// import GeolocationMarker from '@/components/map/markers/GeolocationMarker';
+import GeolocationMarker from '@/components/map/markers/GeolocationMarker';
 import SearchMarker from '@/components/map/markers/SearchMarker';
 
 export default {
-  name: 'Markers',
+  components: { InvaderMarker, SearchMarker, GeolocationMarker },
   props: {
     filters: {
       type: Object,
       default: () => ({}),
     },
   },
-  components: { InvaderMarker, SearchMarker },
   computed: {
     mapModes () { return this.$store.getters['map/modes']; },
     mapMode () { return this.$store.getters['map/selectedMode']; },
     selectedInvaderId () { return this.$store.getters['map/selectedInvaderId']; },
     filteredInvaders () { return this.$store.getters['map/displayedInvaders']; },
-    // geolocationMarkerPosition () {
-    //   return this.$store.getters['map/geolocationMarkerPosition'];
-    // },
-    showSearchMarker () {
-      return this.mapMode === this.mapModes.SEARCH_POSITION;
-    },
+    showSearchMarker () { return this.mapMode === this.mapModes.SEARCH_POSITION; },
+    geolocationMarkerPosition () { return this.$store.getters['map/geolocationMarkerPosition']; },
+    showGeolocationMarker () { return !!this.geolocationMarkerPosition.lat && !!this.geolocationMarkerPosition.lng; },
   },
   methods: {
     isInvaderDraggable (invader) {

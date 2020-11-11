@@ -18,6 +18,7 @@ const initialState = {
   sidebarOpen: false,
   selectedInvaderId: null,
   searchMarkerPosition: {},
+  geolocationMarkerPosition: {},
   filters: {},
 };
 
@@ -46,6 +47,11 @@ export const mutations = {
     Vue.set(state, 'searchMarkerPosition', {});
     Vue.set(state.searchMarkerPosition, 'lat', lat);
     Vue.set(state.searchMarkerPosition, 'lng', lng);
+  },
+  SET_GEOLOCATION_MARKER_POSITION (state, { lat, lng }) {
+    Vue.set(state, 'geolocationMarkerPosition', {});
+    Vue.set(state.geolocationMarkerPosition, 'lat', lat);
+    Vue.set(state.geolocationMarkerPosition, 'lng', lng);
   },
   SET_FILTER (state, { key, value }) {
     Vue.set(state.filters, key, value);
@@ -116,7 +122,6 @@ export const getters = {
 
     return filteredInvaders;
   },
-  searchMarkerPosition (state) {
-    return state.searchMarkerPosition;
-  },
+  searchMarkerPosition (state) { return state.searchMarkerPosition; },
+  geolocationMarkerPosition (state) { return state.geolocationMarkerPosition; },
 };

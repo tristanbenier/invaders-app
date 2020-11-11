@@ -40,6 +40,7 @@
     <div id="toolbar-container">
       <Toolbar
         @add-invader="onInvaderAddClick"
+        @geolocate="onGeolocate"
         @click-search="onSearchClick"
         @click-search-suggestion="onSearchSuggestionClick"
         @clear-search="onSearchClear"
@@ -209,6 +210,21 @@ export default {
           ;
           this.$store.commit('map/SET_FILTER', { key, value });
         }
+      });
+    },
+    onGeolocate () {
+      if (!navigator.geolocation) {
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const center = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        this.$store.commit('map/SET_GEOLOCATION_MARKER_POSITION', center);
+        this.$store.commit('map/SET_CENTER', center);
+        this.$store.commit('map/SET_ZOOM', 18);
+      }, (err) => {
+        alert('Unable to get location');
+        console.error(err);
       });
     },
   },
