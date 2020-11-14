@@ -2,7 +2,7 @@
   <div class="my-3">
     <InvaderForm
       :invader="invader"
-      :error="null"
+      :error="addError"
       :loading="initializationLoading || addLoading"
       @cancel="$emit('cancel')"
       @submit="$emit('add', $event)"
@@ -26,6 +26,9 @@ export default {
   computed: {
     initializationLoading () {
       return this.$store.getters['invaders/loading']('add:initialize');
+    },
+    addError () {
+      return this.$store.getters['invaders/error']('add');
     },
     addLoading () {
       return this.$store.getters['invaders/loading']('add');

@@ -41,8 +41,6 @@
 import Cropper from 'cropperjs';
 import '@/node_modules/cropperjs/dist/cropper.min.css';
 
-// import Utils from 'shared-js-lib/utils/utils';
-
 export default {
   props: {
     image: {
@@ -51,7 +49,7 @@ export default {
     },
     wantedSize: {
       type: Number,
-      default: 750,
+      default: 500,
     },
   },
   data () {

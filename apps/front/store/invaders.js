@@ -63,7 +63,7 @@ export const mutations = {
 };
 
 export const actions = {
-  async fetchAll ({ state, commit }, { forceFetch = false, itemsPerPage = 200, params = {} } = {}) {
+  async fetchAll ({ state, commit }, { forceFetch = false, itemsPerPage = 400, params = {} } = {}) {
     let success = true;
     let doContinue = true;
     commit('SET_LOADING', { key: 'fetch', loading: true });
@@ -80,7 +80,7 @@ export const actions = {
           items = response.map(e => Invader.createFromApi(e));
           commit('SET_ITEMS', items);
           page++;
-          doContinue = (process.env.APP_ENV === 'dev' ? (page < 3) : true) && items.length === itemsPerPage; // FIXME
+          doContinue = (process.env.APP_ENV === 'dev' ? (page < 2) : true) && items.length === itemsPerPage; // FIXME
         } while (doContinue);
       }
     } catch (e) {
@@ -151,6 +151,7 @@ export const actions = {
         data.imagesToAdd = undefined;
       }
 
+      // Remove images if needed
       const { imagesToRemove } = data;
       if (imagesToRemove && imagesToRemove.length) {
         const imagesIdsToRemove = imagesToRemove.map(image => image.id);

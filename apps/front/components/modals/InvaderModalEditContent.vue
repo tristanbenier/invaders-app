@@ -2,7 +2,7 @@
   <div class="my-3">
     <InvaderForm
       :invader="invader"
-      :error="null"
+      :error="editionError"
       :loading="editionLoading"
       @cancel="$emit('cancel')"
       @submit="$emit('edit', $event)"
@@ -24,6 +24,9 @@ export default {
     },
   },
   computed: {
+    editionError () {
+      return this.$store.getters['invaders/error']('update');
+    },
     editionLoading () {
       return this.$store.getters['invaders/loading'](`update:${this.invader.id}`);
     },

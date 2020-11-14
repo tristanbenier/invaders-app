@@ -69,6 +69,9 @@ export default {
     },
   },
   mounted () {
+    this.filters.users.choices = this.usersChoices;
+    this.filters.cities.choices = this.citiesChoices;
+
     this.updateFilterValuesFromHash();
   },
   methods: {

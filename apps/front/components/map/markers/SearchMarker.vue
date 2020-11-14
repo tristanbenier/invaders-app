@@ -10,7 +10,6 @@
 
 <script>
 export default {
-  name: 'SearchMarker',
   computed: {
     position () {
       return this.$store.getters['map/searchMarkerPosition'];

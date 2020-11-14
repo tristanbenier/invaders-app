@@ -1,12 +1,6 @@
 <template>
   <div v-if="localData !== null">
     <b-form v-if="mode === MODES.DEFAULT" @submit.prevent="onSubmit">
-      <div v-if="error">
-        <b-alert show variant="danger" dismissible>
-          {{ error }}
-        </b-alert>
-      </div>
-
       <b-row class="mb-3">
         <b-col>
           <div>
@@ -53,7 +47,7 @@
         <b-col>
           <div>
             <label>
-              Status
+              Points
             </label>
           </div>
 
@@ -196,6 +190,12 @@
       </b-row>
 
       <b-row>
+        <b-col v-if="formError" cols="12" class="mt-2">
+          <b-alert show variant="danger">
+            {{ formError }}
+          </b-alert>
+        </b-col>
+
         <b-col class="text-center mt-3">
           <b-button variant="secondary" @click="$emit('cancel')">
             Cancel
@@ -258,6 +258,7 @@ export default {
       selectedImage: null,
       imagesToAddDataUrls: [],
       pointsOptions: Invader.POINTS,
+      formError: null,
     };
   },
   computed: {
@@ -306,14 +307,21 @@ export default {
     citiesLoading () {
       return this.$store.getters['cities/loading']('fetch');
     },
+    invadersList () {
+      return this.$store.getters['invaders/invadersList'];
+    },
   },
   mounted () {
+    this.loadInvaders();
     this.loadUsers();
     this.loadStatuses();
     this.loadCities();
     this.buildLocalData();
   },
   methods: {
+    loadInvaders () {
+      this.$store.dispatch('invaders/fetchAll');
+    },
     loadUsers () {
       this.$store.dispatch('users/fetchAll');
     },
@@ -367,6 +375,46 @@ export default {
       this.localData.imagesToAdd.splice(imageIndex, 1);
     },
     onSubmit () {
+      // Check data
+      this.formError = null;
+
+      // Check if name selected
+      if (!this.localData.name) {
+        this.formError = 'No name selected';
+        return;
+      }
+
+      // Check if invader already exists with same name
+      if (this.invadersList.find(i => i.name === this.localData.name & i.id !== this.localData.id)) {
+        this.formError = `Invader ${this.localData.name} already exists`;
+        return;
+      }
+
+      // Check if status selected
+      if (!this.localData.statusId) {
+        this.formError = 'No status selected';
+        return;
+      }
+      // Check if city selected
+      if (!this.localData.cityId) {
+        this.formError = 'No city selected';
+        return;
+      }
+
+      // Check if selected city found
+      const city = this.cities[this.localData.cityId];
+      if (!city) {
+        this.formError = 'No city found';
+        return;
+      }
+
+      // Check if invader prefix matches with city prefix
+      const invaderPrefix = `${this.localData.name.split('_')}_`;
+      if (invaderPrefix !== city.prefix) {
+        this.formError = `Bad invader name (should start with "${city.prefix}")`;
+        return;
+      }
+
       const formData = JSON.parse(JSON.stringify(this.localData));
 
       formData.city = this.cities[formData.cityId].iri;

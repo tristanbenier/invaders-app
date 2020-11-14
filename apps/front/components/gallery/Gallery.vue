@@ -89,9 +89,7 @@ export default {
         if (!isNaN(invader.points)) {
           total += parseInt(invader.points);
         }
-        if (total % 10 !== 0) {
-          console.log(invader.name, invader.id);
-        }
+
         return total;
       }, 0);
     },

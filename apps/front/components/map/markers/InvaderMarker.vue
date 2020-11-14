@@ -13,7 +13,6 @@
 import Invader from '@/entities/Invader';
 
 export default {
-  name: 'InvaderMarker',
   props: {
     invader: {
       type: Invader,

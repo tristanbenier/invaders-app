@@ -222,9 +222,8 @@ export default {
         this.$store.commit('map/SET_GEOLOCATION_MARKER_POSITION', center);
         this.$store.commit('map/SET_CENTER', center);
         this.$store.commit('map/SET_ZOOM', 18);
-      }, (err) => {
+      }, (_) => {
         alert('Unable to get location');
-        console.error(err);
       });
     },
   },
