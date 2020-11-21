@@ -409,7 +409,7 @@ export default {
       }
 
       // Check if invader prefix matches with city prefix
-      const invaderPrefix = `${this.localData.name.split('_')}_`;
+      const invaderPrefix = `${this.localData.name.split('_').shift()}_`;
       if (invaderPrefix !== city.prefix) {
         this.formError = `Bad invader name (should start with "${city.prefix}")`;
         return;

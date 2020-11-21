@@ -72,7 +72,7 @@ class Image
     /**
      * @var File|null
      *
-     * @Vich\UploadableField(mapping="image", fileNameProperty="filename")
+     * @Vich\UploadableField(mapping="invader_image", fileNameProperty="filename")
      */
     private $file;
 

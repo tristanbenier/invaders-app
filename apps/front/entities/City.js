@@ -3,12 +3,18 @@ class City {
     return `/cities/${this.id}`;
   }
 
-  static createFromApi ({ id, name, prefix } = {}) {
+  get fileUrl () {
+    return `${process.env.API_URL}${this._fileUrl}`;
+  }
+
+  static createFromApi ({ id, name, prefix, fileUrl, thumbnailUrl } = {}) {
     const item = new City();
 
     item.id = id;
     item.name = name;
     item.prefix = prefix;
+    item._fileUrl = fileUrl;
+    item.thumbnailUrl = thumbnailUrl;
 
     return item;
   }

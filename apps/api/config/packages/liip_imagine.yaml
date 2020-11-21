@@ -22,3 +22,8 @@ liip_imagine:
             quality: 75
             filters:
                 thumbnail:  { size: [30, 30], mode: outbound }
+        city_thumbnail:
+            format: jpeg
+            quality: 75
+            filters:
+                thumbnail:  { size: [30, 30], mode: outbound }

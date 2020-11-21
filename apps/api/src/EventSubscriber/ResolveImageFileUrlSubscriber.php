@@ -4,6 +4,7 @@ namespace App\EventSubscriber;
 
 use ApiPlatform\Core\EventListener\EventPriorities;
 use ApiPlatform\Core\Util\RequestAttributesExtractor;
+use App\Entity\City;
 use App\Entity\Image;
 use App\Entity\Invader;
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
@@ -61,6 +62,29 @@ final class ResolveImageFileUrlSubscriber implements EventSubscriberInterface
 
         if (is_a($attributes['resource_class'], Image::class, true)) {
             $this->resolveImagesUrls($resources);
+        }
+
+        if (is_a($attributes['resource_class'], City::class, true)) {
+            $this->resolveCityImagesUrls($resources);
+        }
+    }
+
+    private function resolveCityImagesUrls(iterable $cities): void
+    {
+        foreach ($cities as $city) {
+            if (!$city instanceof City) {
+                continue;
+            }
+
+            $imageUrl = $this->vichStorage->resolveUri($city, 'file');
+            $thumbnailUrl = $this->imagineCache->getBrowserPath($imageUrl, 'city_thumbnail');
+
+            if ($imageUrl) {
+                $city->setFileUrl($imageUrl);
+            }
+            if ($thumbnailUrl) {
+                $city->setThumbnailUrl($thumbnailUrl);
+            }
         }
     }
 

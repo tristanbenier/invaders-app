@@ -36,14 +36,14 @@ export default {
 .gallery-item {
   position: relative;
   background: $grey_dark;
-  background-size: cover;
-  background-position: center;
   cursor: pointer;
 
   .gallery-item-thumbnail {
     position: absolute;
     width: 100%;
     height: 100%;
+    background-size: cover;
+    background-position: center;
   }
 
   .gallery-item-name {

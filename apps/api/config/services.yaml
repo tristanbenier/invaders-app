@@ -33,3 +33,6 @@ services:
     # Vich
     App\Vich\Namer\InvaderImageNamer:
         public: true
+
+    App\Vich\Namer\CityNamer:
+        public: true

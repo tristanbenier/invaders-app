@@ -9,6 +9,10 @@
     "build": "nuxt build",
     "start": "nuxt start",
     "generate": "nuxt generate",
+    "deploy": "npm run copy-env && nuxt generate && npm run restore-env && npm run copy-htaccess",
+    "copy-env": "cp .env .env.dev && cp .env.prod .env",
+    "restore-env": "rm .env && mv .env.dev .env",
+    "copy-htaccess": "cp ../../deployment/front-htaccess dist/.htaccess",
     "lint": "eslint --ext .js,.vue --ignore-path .gitignore .",
     "lint-fix": "eslint --ext .js,.vue --ignore-path .gitignore . --fix",
     "test": "jest"

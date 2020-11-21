@@ -13,5 +13,5 @@ api_platform:
     collection:
         pagination:
             enabled: true
-            items_per_page: 2
+            items_per_page: 100
             client_items_per_page: true # Disabled by default
