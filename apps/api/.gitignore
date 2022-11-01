@@ -16,6 +16,7 @@
 
 ###> invaders
 /public/upload/images/invaders/*
+/public/upload/images/cities/*
 ###< invaders
 
 ###> liip/imagine-bundle ###

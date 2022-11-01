@@ -1,5 +1,5 @@
 <template>
-  <div class="city-item" :style="cityItemStyle" @click="$emit('click')">
+  <div class="city-item" @click="$emit('click')">
     <UiBlurImageLoader
       v-if="city.fileUrl"
       :src="city.fileUrl"
@@ -8,7 +8,9 @@
     />
 
     <div class="info">
-      <div class="name">{{ city.name }}</div>
+      <div class="name">
+        {{ city.name }}
+      </div>
       {{ invaders }} / {{ points }} pts
     </div>
   </div>
@@ -30,17 +32,6 @@ export default {
     points: {
       type: Number,
       default: 0,
-    },
-  },
-  computed: {
-    cityItemStyle () {
-      const style = {};
-
-      if (this.city.fileUrl) {
-        style.backgroundImage = `url(${this.city.fileUrl})`;
-      }
-
-      return style;
     },
   },
 };

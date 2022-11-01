@@ -60,7 +60,7 @@ export default {
     position: absolute;
     top: 0;
     left: 0;
-    right: 80px;
+    right: calc(3 * 35px + 3 * 5px);
   }
 
   .toolbar-item {

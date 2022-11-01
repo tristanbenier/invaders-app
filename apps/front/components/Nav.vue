@@ -36,18 +36,10 @@
 
       <NuxtLink
         :to="{ name: 'statistics' }"
-        class="nav-link-item d-block my-2"
-        @click.native="$emit('close-nav')"
-      >
-        Statistics
-      </NuxtLink>
-
-      <NuxtLink
-        :to="{ name: 'my-account' }"
         class="nav-link-item d-block my-2 mb-5"
         @click.native="$emit('close-nav')"
       >
-        My account
+        Statistics
       </NuxtLink>
 
       <b-button variant="primary" @click="$emit('logout')">

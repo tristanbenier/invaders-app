@@ -280,4 +280,5 @@ export const getters = {
   invader (state) { return invaderId => state.items[invaderId] || null; },
   invadersList (state) { return Object.values(state.items); },
   invaderToAdd (state) { return state.invaderToAdd; },
+  invadersByCityId (state) { return cityId => Object.values(state.items).filter(i => i.city.id === cityId); },
 };

@@ -107,6 +107,9 @@ front-lint:
 front-test:
 	- cd apps/front && npm run test
 
+front-deploy:
+	- cd apps/front && npm run deploy
+
 # ----------------------------
 # Internals
 build:

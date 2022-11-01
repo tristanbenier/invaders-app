@@ -1,6 +1,16 @@
 <template>
   <b-container>
-    <b-row class="cities-list mt-3">
+    <div v-if="citiesLoading || invadersLoading" class="text-center mt-5">
+      <div v-if="citiesLoading" class="mt-3">
+        <b-spinner variant="light" small />&nbsp;&nbsp;&nbsp;Loading cities...
+      </div>
+
+      <div v-if="!citiesLoading && invadersLoading" class="mt-3">
+        <b-spinner variant="light" small />&nbsp;&nbsp;&nbsp;Loading invaders...
+      </div>
+    </div>
+
+    <b-row v-if="!citiesLoading && !invadersLoading" class="cities-list mt-3">
       <b-col
         v-for="city in citiesList"
         :key="city.id"
@@ -13,6 +23,7 @@
           :city="city"
           :invaders="cityInvaders(city).length"
           :points="cityPoints(city)"
+          @click="onCityClick(city)"
         />
       </b-col>
     </b-row>
@@ -25,12 +36,16 @@ import CityItem from '@/components/statistics/CityItem';
 export default {
   components: { CityItem },
   fetch () {
-    this.$store.dispatch('users/fetchAll');
     this.$store.dispatch('cities/fetchAll');
     this.$store.dispatch('invaders/fetchAll');
-    this.$store.dispatch('status/fetchAll');
   },
   computed: {
+    citiesLoading () {
+      return this.$store.getters['cities/loading']('fetch');
+    },
+    invadersLoading () {
+      return this.$store.getters['invaders/loading']('fetch');
+    },
     citiesList () {
       return [...this.$store.getters['cities/citiesList']]
         .sort((a, b) => a.name.localeCompare(b.name))
@@ -45,9 +60,7 @@ export default {
   },
   methods: {
     cityInvaders (city) {
-      return this.invadersList
-        .filter(i => i.city.id === city.id)
-      ;
+      return this.$store.getters['invaders/invadersByCityId'](city.id);
     },
     cityPoints (city) {
       return this.cityInvaders(city)
@@ -58,6 +71,9 @@ export default {
           return total;
         }, 0)
       ;
+    },
+    onCityClick (city) {
+      return this.$router.push({ name: 'statistics-citySlug', params: { citySlug: city.slug } });
     },
   },
 };

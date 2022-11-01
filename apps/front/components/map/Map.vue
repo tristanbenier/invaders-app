@@ -1,6 +1,8 @@
 <template>
   <div id="map">
+    <div id="fake-map"></div>
     <GmapMap
+      id="map"
       ref="map"
       :center="mapCenter"
       :zoom="mapZoom"

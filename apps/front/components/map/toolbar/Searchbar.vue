@@ -36,10 +36,10 @@
           <b-icon icon="geo-alt-fill" />
         </span>
         <span class="suggestion-item-name">
-          {{ place.value.split(',').slice(0, 1)[0] }}
+          {{ place.formatted_address }}
         </span>
         <span class="suggestion-item-info">
-          {{ place.value.split(',').slice(1, place.value.split(',').length - 1).join(', ') }}
+          {{ place.formatted_address }}
         </span>
       </div>
     </div>
@@ -47,6 +47,8 @@
 </template>
 
 <script>
+import { throttle } from '@/lib/utils/callable';
+
 import Invader from '@/components/_common/Invader';
 
 export default {
@@ -78,7 +80,7 @@ export default {
       ;
     },
     showSuggestions () {
-      return this.suggestions.invaders.length > 0 || this.suggestions.places.length > 0;
+      return !!this.inputValue;
     },
     searchInputStyle () {
       const style = {};
@@ -90,23 +92,38 @@ export default {
       return style;
     },
   },
-  mounted () {
-    this.input = this.$geocoding.initGeocodingInput(document.querySelector('#search-input'));
-
-    this.input.on('suggestions', this.onSuggestions);
-    this.input.on('clear', this.onClear);
+  watch: {
+    inputValue () {
+      if (this.inputValue) {
+        this.suggestions.invaders = this.filteredInvaders.slice(0, 5);
+        throttle(this.searchPlaces(this.inputValue), 500);
+      } else {
+        this.suggestions = {
+          invaders: [],
+          places: [],
+        };
+        this.onClear();
+      }
+    },
   },
   methods: {
+    async searchPlaces (query) {
+      try {
+        const places = await this.$geocoding.getPlacesFromQuery(query);
+        this.suggestions.places = places;
+      } catch (e) {
+        // Do nothing
+      }
+    },
     onSuggestions (e) {
       this.suggestions = {
         invaders: this.filteredInvaders.slice(0, 5),
-        places: e.suggestions.slice(0, this.filteredInvaders.length ? 2 : 5),
       };
     },
     onSuggestionClick (type, element) {
       const position = type === 'invader'
         ? (element.coordinates || null)
-        : (element.latlng || null)
+        : { lat: element.geometry.location.lat(), lng: element.geometry.location.lng() }
       ;
 
       if (!position) {
@@ -131,6 +148,8 @@ export default {
     height: 35px;
     border-radius: 5px;
     border: none;
+    padding: 0 1em;
+    width: 100%;
   }
 
   #search-suggestions {
