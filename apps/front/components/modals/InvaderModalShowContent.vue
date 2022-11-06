@@ -31,7 +31,12 @@
     </b-row>
 
     <div class="invader-images">
-      <VueCarousel v-if="invader.images.length > 1" :data="carouselImages" :autoplay="false" indicator-type="disc" />
+      <VueCarousel
+        v-if="invader.images.length > 1"
+        :data="carouselImages"
+        :autoplay="false"
+        indicator-type="disc"
+      />
       <div v-if="invader.images.length === 1" class="invader-image">
         <UiBlurImageLoader
           :src="invader.images[0].url"
@@ -43,7 +48,6 @@
 </template>
 
 <script>
-
 import VueCarousel from '@chenfengyuan/vue-carousel';
 
 import Invader from '@/entities/Invader';
@@ -72,12 +76,11 @@ export default {
   computed: {
     carouselImages () {
       if (this.invader && this.invader.images) {
-        // <img src="${image.url}">
         return this.invader.images.map(image => `
           <div class="invader-image">
             <UiBlurImageLoader
-              :src="${image.url}"
-              :small-src="${image.thumbnailUrl}"
+              src="${image.url}"
+              small-src="${image.thumbnailUrl}"
             />
           </div>`,
         );
