@@ -1,10 +1,34 @@
-# MacOS files
-.DS_Store
-*/.DS_Store
-
-# NodeJS version
-.nvmrc
-
-# dotenv environment variables file
+# Secrets and local configuration (the template .env.example is committed)
 .env
-*/.env
+.env.*
+!.env.example
+*.local
+
+# Personal Claude Code settings (.claude/launch.json is shared)
+CLAUDE.md
+.claude/*
+docs/*
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.sqlite3
+
+# Django: collected static files and uploaded photos
+staticfiles/
+media/
+
+# Frontend
+node_modules/
+dist/
+dev-dist/
+.vite/
+*.tsbuildinfo
+
+# Logs, tooling and OS files
+*.log
+coverage/
+.idea/
+.DS_Store
+
