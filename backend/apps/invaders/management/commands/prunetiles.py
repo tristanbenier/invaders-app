@@ -1,28 +1,18 @@
-import time
-
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
+from apps.invaders.tiles import prune
+
 
 class Command(BaseCommand):
-    help = "Delete cached map tiles not refreshed for a while (run e.g. weekly from cron)."
+    help = "Delete cached map tiles not refreshed for a while (the app also does it once a day)."
 
     def add_arguments(self, parser):
-        parser.add_argument("--days", type=int, default=30, help="Maximum age of a cached tile (default: 30)")
+        parser.add_argument(
+            "--days", type=int, default=None, help="Maximum age of a cached tile (default: TILE_CACHE_MAX_DAYS)"
+        )
 
     def handle(self, *args, days, **options):
-        root = settings.TILE_CACHE_DIR
-        if not root.exists():
-            self.stdout.write("No tile cache.")
-            return
-        limit = time.time() - days * 24 * 60 * 60
-        removed = 0
-        for path in root.rglob("*.png"):
-            if path.stat().st_mtime < limit:
-                path.unlink()
-                removed += 1
-        # Remove the directories left empty, deepest first.
-        for directory in sorted((p for p in root.rglob("*") if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
-            if not any(directory.iterdir()):
-                directory.rmdir()
-        self.stdout.write(self.style.SUCCESS(f"{removed} cached tile(s) removed."))
+        days = settings.TILE_CACHE_MAX_DAYS if days is None else days
+        removed = prune(days)
+        self.stdout.write(self.style.SUCCESS(f"{removed} cached tile(s) older than {days} day(s) removed."))

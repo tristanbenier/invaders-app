@@ -282,10 +282,15 @@ def map_tile(request, z, x, y):
     if not tiles.is_valid(z, x, y):
         return HttpResponse(status=404)
     try:
-        path = tiles.get_tile(z, x, y)
+        try:
+            tile = tiles.get_tile(z, x, y).open("rb")
+        except FileNotFoundError:
+            # Deleted by a concurrent pruning pass between the check and the read.
+            tile = tiles.get_tile(z, x, y).open("rb")
     except tiles.TileError:
         return HttpResponse(status=502)
-    response = FileResponse(path.open("rb"), content_type="image/png")
+    tiles.maybe_prune_async()
+    response = FileResponse(tile, content_type="image/png")
     # Let the browser keep tiles for a day instead of asking again on every reload.
     response["Cache-Control"] = "private, max-age=86400"
     return response
