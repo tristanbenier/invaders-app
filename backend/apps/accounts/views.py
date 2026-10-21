@@ -114,6 +114,11 @@ class TeamMemberRemoveView(APIView):
 class InvitationListCreateView(generics.ListCreateAPIView):
     serializer_class = InvitationSerializer
 
+    @property
+    def throttle_scope(self):
+        # Limit creating invitations, not listing them (the team page lists them on each visit).
+        return "invitations" if self.request.method == "POST" else None
+
     def get_queryset(self):
         return Invitation.objects.pending().filter(team=self.request.user.team).select_related("invited_by")
 

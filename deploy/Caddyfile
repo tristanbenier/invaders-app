@@ -3,6 +3,23 @@
 {$INVADERS_DOMAIN} {
 	encode zstd gzip
 
+	# Photos are at most 10 MB (checked by Django too); refuse bigger bodies right away.
+	request_body {
+		max_size 15MB
+	}
+
+	# Scripts, styles, images and API calls only from this site; no framing. Leaflet sets inline
+	# styles, hence 'unsafe-inline' for styles only. Not on the Django admin, which may rely on inline scripts.
+	@app not path /admin/*
+	header @app Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob:; worker-src 'self'; manifest-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+
+	header {
+		# Geolocation for the map; camera for photo uploads; nothing else.
+		Permissions-Policy "geolocation=(self), camera=(self), microphone=(), payment=(), usb=()"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+
 	# Vue build and icons, collected by `manage.py collectstatic`.
 	handle_path /static/* {
 		root * /srv/invaders/backend/staticfiles

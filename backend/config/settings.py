@@ -160,14 +160,29 @@ REST_FRAMEWORK = {
         "apps.accounts.permissions.IsTeamMember",
     ],
     "EXCEPTION_HANDLER": "config.exceptions.exception_handler",
+    # Every endpoint has a global limit (per user, or per IP when anonymous); sensitive or
+    # costly actions add a scoped limit on top (`throttle_scope` on the view).
     "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
         "rest_framework.throttling.ScopedRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
+        "anon": "60/min",
+        "user": "600/min",
         "auth": "10/min",
         "geocode": "30/min",
+        "import": "20/hour",
+        "invitations": "30/hour",
     },
+    # Proxies in front of Django (Caddy = 1): needed to throttle per real client IP rather than
+    # everyone sharing 127.0.0.1. Keep 0 when Django is reached directly (dev).
+    "NUM_PROXIES": env.int("NUM_PROXIES", default=0),
 }
+
+# Map tiles per member and admin login attempts per IP (config/ratelimit.py).
+TILE_RATE_LIMIT_PER_MINUTE = 600
+ADMIN_LOGIN_ATTEMPTS_PER_MINUTE = 10
 
 INVITATION_VALIDITY_DAYS = 7
 

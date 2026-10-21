@@ -2,7 +2,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from .images import normalize_image
+from .images import InvalidImage, normalize_image
 from .models import City, Country, Flash, Invader, InvaderHistory
 from .naming import PREFIX_PATTERN, parse_name
 
@@ -20,7 +20,10 @@ class NormalizedImageField(serializers.ImageField):
     def to_internal_value(self, data):
         if data.size > MAX_IMAGE_SIZE:
             raise serializers.ValidationError("L'image dépasse la taille maximale de 10 Mo.")
-        return normalize_image(super().to_internal_value(data))
+        try:
+            return normalize_image(super().to_internal_value(data))
+        except InvalidImage as exc:
+            raise serializers.ValidationError(str(exc))
 
     def validate_empty_values(self, data):
         is_empty, value = super().validate_empty_values(data)
@@ -110,6 +113,9 @@ class CitySerializer(serializers.ModelSerializer):
 class InvaderSerializer(serializers.ModelSerializer):
     lat = serializers.FloatField(min_value=-90, max_value=90)
     lng = serializers.FloatField(min_value=-180, max_value=180)
+    # Real invaders are worth 10 to 100 points; the cap keeps stats meaningful.
+    points = serializers.IntegerField(min_value=0, max_value=1000)
+    comment = serializers.CharField(max_length=2000, required=False, allow_blank=True)
     image = NormalizedImageField()
     created_by = UserSummarySerializer(read_only=True)
     # Annotated by InvaderViewSet.get_queryset().

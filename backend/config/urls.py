@@ -5,9 +5,15 @@ from django.urls import include, path, re_path
 
 from apps.invaders.views import map_tile
 
+from .ratelimit import limit_posts_by_ip
 from .views import SpaView, service_worker
 
 urlpatterns = [
+    # Before admin.site.urls: brute-force protection for the admin login form.
+    path(
+        "admin/login/",
+        limit_posts_by_ip(settings.ADMIN_LOGIN_ATTEMPTS_PER_MINUTE, 60, "admin-login")(admin.site.login),
+    ),
     path("admin/", admin.site.urls),
     path("api/", include("apps.accounts.urls")),
     path("api/", include("apps.invaders.urls")),

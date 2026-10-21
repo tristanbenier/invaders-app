@@ -21,7 +21,8 @@ async function submit() {
   submitting.value = true
   try {
     await auth.login(email.value, password.value)
-    const next = typeof route.query.next === 'string' && route.query.next.startsWith('/') ? route.query.next : '/'
+    // Only in-app paths: "//host" or "/\\host" would point to another site.
+    const next = typeof route.query.next === 'string' && /^\/(?![\/\\])/.test(route.query.next) ? route.query.next : '/'
     await router.replace(next)
   } catch (error) {
     capture(error)

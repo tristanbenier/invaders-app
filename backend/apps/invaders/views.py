@@ -1,5 +1,6 @@
 from django.db.models import Count, Exists, IntegerField, OuterRef, ProtectedError, Q, Subquery, Value
 from django.db.models.functions import Coalesce
+from django.conf import settings
 from django.http import FileResponse, HttpResponse
 from django.utils import timezone
 from django.views.decorators.http import require_GET
@@ -12,6 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsTeamAdmin, IsTeamMember
+from config import ratelimit
 
 from . import geocoding, history, importer, tiles
 from .models import City, Country, Flash, HistoryAction, Invader, InvaderHistory, Status
@@ -245,6 +247,8 @@ class MyFlashListView(generics.ListAPIView):
 class ImportView(APIView):
     """POST a JSON file (multipart "file") or a JSON list as the request body."""
 
+    throttle_scope = "import"
+
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     commit = False
 
@@ -279,6 +283,8 @@ def map_tile(request, z, x, y):
     user = request.user
     if not (user.is_authenticated and user.team_id):
         return HttpResponse(status=403)
+    if not ratelimit.is_allowed(f"tiles:{user.pk}", settings.TILE_RATE_LIMIT_PER_MINUTE, 60):
+        return ratelimit.too_many_requests()
     if not tiles.is_valid(z, x, y):
         return HttpResponse(status=404)
     try:
