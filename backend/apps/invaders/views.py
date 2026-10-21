@@ -1,4 +1,4 @@
-from django.db.models import Count, ProtectedError, Exists, IntegerField, OuterRef, Subquery, Value
+from django.db.models import Count, Exists, IntegerField, OuterRef, ProtectedError, Q, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from rest_framework import generics, status, viewsets
@@ -13,6 +13,7 @@ from apps.accounts.permissions import IsTeamAdmin, IsTeamMember
 
 from . import geocoding, history, importer
 from .models import City, Country, Flash, HistoryAction, Invader, InvaderHistory, Status
+from .naming import search_terms
 from .serializers import (
     CitySerializer,
     CountrySerializer,
@@ -131,7 +132,11 @@ class InvaderViewSet(TeamScopedViewSet):
         params = self.request.query_params
 
         if search := params.get("search", "").strip():
-            queryset = queryset.filter(name__icontains=search)
+            text, exact = search_terms(search)
+            matches = Q(name__icontains=text)
+            if exact:
+                matches |= Q(prefix=exact[0], number=exact[1])
+            queryset = queryset.filter(matches)
         if (city := _id_param(self.request, "city")) is not None:
             queryset = queryset.filter(city_id=city)
         if (country := _id_param(self.request, "country")) is not None:

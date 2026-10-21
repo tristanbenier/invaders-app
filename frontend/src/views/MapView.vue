@@ -202,7 +202,14 @@ provide(MAP_CONTEXT, {
 
 onMounted(() => {
   const instance = L.map(mapElement.value!, { zoomControl: false, maxZoom: 19, ...DEFAULT_VIEW })
-  L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 19, className: 'map-tiles' }).addTo(instance)
+  L.tileLayer(TILE_URL, {
+    attribution: TILE_ATTRIBUTION,
+    maxZoom: 19,
+    className: 'map-tiles',
+    // OSM blocks tiles requested without a Referer, and Django's page policy (same-origin)
+    // would strip it: send our origin to the tile server only.
+    referrerPolicy: 'strict-origin-when-cross-origin',
+  }).addTo(instance)
   clusters = L.markerClusterGroup({
     chunkedLoading: true,
     showCoverageOnHover: false,
@@ -476,7 +483,7 @@ watch(
   width: 60%;
   height: 60%;
   background: currentColor;
-  mask: url('/favicon.svg') center / contain no-repeat;
+  mask: url('@/assets/invader.svg') center / contain no-repeat;
 }
 
 .pin--flashed {

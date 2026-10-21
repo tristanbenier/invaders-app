@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
+import invaderLogo from '@/assets/invader.svg'
 import FieldErrors from '@/components/FieldErrors.vue'
 import { useFormErrors } from '@/composables/useFormErrors'
 import { useAuthStore } from '@/stores/auth'
@@ -33,7 +34,7 @@ async function submit() {
 <template>
   <div class="page auth">
     <header class="auth__header">
-      <img src="/favicon.svg" alt="" width="56" height="41" class="auth__logo" />
+      <img :src="invaderLogo" alt="" width="56" height="41" class="auth__logo" />
       <h1>Invaders</h1>
       <p class="muted">La carte des Space Invaders de votre équipe.</p>
     </header>

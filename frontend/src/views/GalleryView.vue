@@ -277,7 +277,7 @@ function state(invader: Invader) {
   width: 45%;
   height: 45%;
   background: currentColor;
-  mask: url('/favicon.svg') center / contain no-repeat;
+  mask: url('@/assets/invader.svg') center / contain no-repeat;
 }
 
 .tile--flashed .tile__placeholder {

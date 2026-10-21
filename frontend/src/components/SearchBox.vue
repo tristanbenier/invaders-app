@@ -14,6 +14,14 @@ const emit = defineEmits<{ select: [invader: Invader]; selectPlace: [place: Plac
 const places = usePlacesStore()
 
 const MIN_ADDRESS_LENGTH = 3
+// Same loose format as the API search: "pa 123", "pa123", "PA-123", "pa_0123".
+const LOOSE_NAME = /^([A-Z]+)[\s_-]*(\d+)$/
+
+/** "PA_123" for any loose spelling of an invader name (leading zeros ignored), else null. */
+function nameKey(text: string) {
+  const match = LOOSE_NAME.exec(text.trim().toUpperCase())
+  return match ? `${match[1]}_${Number(match[2])}` : null
+}
 
 const query = ref('')
 const results = ref<Invader[]>([])
@@ -95,7 +103,8 @@ async function searchAddress() {
 
 function submit() {
   // An exact invader name opens it; anything else is looked up as an address.
-  const exact = results.value.find((invader) => invader.name === trimmed.value.toUpperCase())
+  const key = nameKey(trimmed.value)
+  const exact = key ? results.value.find((invader) => nameKey(invader.name) === key) : undefined
   if (exact) return select(exact)
   if (addressResults.value?.length) return selectPlace(addressResults.value[0]!)
   if (canSearchAddress.value) return searchAddress()

@@ -3,6 +3,7 @@ from pathlib import Path
 from config.env import env, load_env
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR.parent / "frontend"
 
 load_env()
 
@@ -12,7 +13,7 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
 # Base URL of the Vue app, used to build invitation links.
-FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:8000")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -22,6 +23,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "django_vite",
     "apps.accounts",
     "apps.invaders",
 ]
@@ -42,7 +44,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -78,6 +80,21 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# The Vue app, built by Vite into frontend/dist (served under /static/).
+FRONTEND_DIST_DIR = FRONTEND_DIR / "dist"
+# Built files first; frontend/public also serves favicon and icons before any build.
+STATICFILES_DIRS = [path for path in (FRONTEND_DIST_DIR, FRONTEND_DIR / "public") if path.exists()]
+
+# Dev mode: scripts come from the Vite dev server (hot reload, `npm run dev`).
+# Otherwise: hashed files from the Vite build manifest (`npm run build`).
+DJANGO_VITE = {
+    "default": {
+        "dev_mode": env.bool("DJANGO_VITE_DEV_MODE", default=DEBUG),
+        "dev_server_host": env("DJANGO_VITE_DEV_SERVER_HOST", default="localhost"),
+        "dev_server_port": env.int("DJANGO_VITE_DEV_SERVER_PORT", default=5173),
+        "manifest_path": FRONTEND_DIST_DIR / ".vite" / "manifest.json",
+    }
+}
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
