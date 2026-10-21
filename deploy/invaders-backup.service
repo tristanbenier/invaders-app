@@ -1,0 +1,9 @@
+# /etc/systemd/system/invaders-backup.service (started by invaders-backup.timer)
+[Unit]
+Description=Invaders backup (database and photos)
+
+[Service]
+Type=oneshot
+User=invaders
+Group=invaders
+ExecStart=/srv/invaders/deploy/backup.sh

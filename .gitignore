@@ -22,6 +22,7 @@ __pycache__/
 staticfiles/
 media/
 tile_cache/
+cache/
 
 # Frontend
 node_modules/

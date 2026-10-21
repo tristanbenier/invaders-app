@@ -88,7 +88,8 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+# Filled by `collectstatic` and served directly by Caddy in production.
+STATIC_ROOT = Path(env("STATIC_ROOT", default=str(BASE_DIR / "staticfiles")))
 # The Vue app, built by Vite into frontend/dist (served under /static/).
 FRONTEND_DIST_DIR = FRONTEND_DIR / "dist"
 # Built files first; frontend/public also serves favicon and icons before any build.
@@ -106,7 +107,17 @@ DJANGO_VITE = {
 }
 
 MEDIA_URL = "media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_ROOT = Path(env("MEDIA_ROOT", default=str(BASE_DIR / "media")))
+
+# Shared by all Gunicorn workers (throttling, geocoding results): the default in-memory
+# cache would be per process. Files avoid extra writes to the SQLite database.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.filebased.FileBasedCache",
+        "LOCATION": env("CACHE_DIR", default=str(BASE_DIR / "cache")),
+        "OPTIONS": {"MAX_ENTRIES": 20000},
+    }
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -118,6 +129,28 @@ CSRF_FAILURE_VIEW = "config.exceptions.csrf_failure"
 # Browsers' default policy: other sites only get our origin, never the page path. OSM tile
 # servers block requests without a Referer, which Django's default ("same-origin") removes.
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+
+if not DEBUG:
+    # Behind Caddy, which terminates HTTPS and sets X-Forwarded-Proto.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
+    # Start low and raise (e.g. 31536000) once HTTPS is known to work: browsers remember it.
+    SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=3600)
+    # Not for subdomains or the preload list: with a shared domain (e.g. DuckDNS) the other
+    # subdomains are not ours to commit to HTTPS.
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
+    SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"plain": {"format": "{asctime} {levelname} {name}: {message}", "style": "{"}},
+    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "plain"}},
+    # Gunicorn sends stdout/stderr to the systemd journal (`journalctl -u invaders`).
+    "root": {"handlers": ["console"], "level": "INFO"},
+    "loggers": {"django": {"handlers": ["console"], "level": "INFO", "propagate": False}},
+}
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
