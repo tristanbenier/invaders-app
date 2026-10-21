@@ -19,7 +19,8 @@ import { useInvadersStore } from '@/stores/invaders'
 import { usePlacesStore } from '@/stores/places'
 import { useTeamStore } from '@/stores/team'
 
-const TILE_URL = import.meta.env.VITE_MAP_TILE_URL || 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+// OSM tiles relayed (and cached) by Django: browsers like Brave strip the Referer OSM requires.
+const TILE_URL = import.meta.env.VITE_MAP_TILE_URL || '/tiles/{z}/{x}/{y}.png'
 const TILE_ATTRIBUTION =
   import.meta.env.VITE_MAP_TILE_ATTRIBUTION ||
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -206,9 +207,6 @@ onMounted(() => {
     attribution: TILE_ATTRIBUTION,
     maxZoom: 19,
     className: 'map-tiles',
-    // OSM blocks tiles requested without a Referer, and Django's page policy (same-origin)
-    // would strip it: send our origin to the tile server only.
-    referrerPolicy: 'strict-origin-when-cross-origin',
   }).addTo(instance)
   clusters = L.markerClusterGroup({
     chunkedLoading: true,

@@ -14,10 +14,14 @@ docs/*
 __pycache__/
 *.pyc
 *.sqlite3
+# SQLite WAL mode side files
+*.sqlite3-wal
+*.sqlite3-shm
 
-# Django: collected static files and uploaded photos
+# Django: collected static files, uploaded photos and cached map tiles
 staticfiles/
 media/
+tile_cache/
 
 # Frontend
 node_modules/

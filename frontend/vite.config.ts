@@ -46,13 +46,13 @@ export default defineConfig({
         inlineWorkboxRuntime: true,
         runtimeCaching: [
           {
-            // Map tiles rarely change: serve them from cache to save data and speed up the map.
-            urlPattern: /^https:\/\/tile\.openstreetmap\.org\//,
+            // Map tiles (relayed by Django) rarely change: serve them from cache to save data.
+            urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/tiles/'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'map-tiles',
               expiration: { maxEntries: 1000, maxAgeSeconds: 7 * 24 * 60 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
+              cacheableResponse: { statuses: [200] },
             },
           },
         ],

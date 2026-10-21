@@ -58,9 +58,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
+# SQLite by default (a file next to manage.py); DATABASE_URL can point elsewhere, e.g. PostgreSQL.
 DATABASES = {
-    "default": env.db("DATABASE_URL", default="postgres:///invaders"),
+    "default": env.db_url_config(env("DATABASE_URL", default="") or f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
 }
+if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
+    DATABASES["default"]["OPTIONS"] = {
+        # WAL lets readers work while a write is in progress; writers wait instead of failing
+        # with "database is locked" when several Gunicorn workers write at once.
+        "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON;",
+        "transaction_mode": "IMMEDIATE",
+        "timeout": 20,
+    }
 
 AUTH_USER_MODEL = "accounts.User"
 
@@ -106,6 +115,9 @@ CSRF_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
 CSRF_FAILURE_VIEW = "config.exceptions.csrf_failure"
+# Browsers' default policy: other sites only get our origin, never the page path. OSM tile
+# servers block requests without a Referer, which Django's default ("same-origin") removes.
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -128,3 +140,7 @@ INVITATION_VALIDITY_DAYS = 7
 
 # Sent to Nominatim for reverse geocoding; its usage policy requires an identifying value.
 GEOCODER_USER_AGENT = env("GEOCODER_USER_AGENT", default="Invaders/1.0 (team map for Space Invaders)")
+
+# Map tiles are relayed from OpenStreetMap (apps/invaders/tiles.py) and cached on disk.
+TILE_USER_AGENT = env("TILE_USER_AGENT", default=GEOCODER_USER_AGENT)
+TILE_CACHE_DIR = Path(env("TILE_CACHE_DIR", default=str(BASE_DIR / "tile_cache")))

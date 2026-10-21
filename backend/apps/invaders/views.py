@@ -1,6 +1,8 @@
 from django.db.models import Count, Exists, IntegerField, OuterRef, ProtectedError, Q, Subquery, Value
 from django.db.models.functions import Coalesce
+from django.http import FileResponse, HttpResponse
 from django.utils import timezone
+from django.views.decorators.http import require_GET
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -11,7 +13,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.permissions import IsTeamAdmin, IsTeamMember
 
-from . import geocoding, history, importer
+from . import geocoding, history, importer, tiles
 from .models import City, Country, Flash, HistoryAction, Invader, InvaderHistory, Status
 from .naming import search_terms
 from .serializers import (
@@ -269,3 +271,21 @@ class ImportView(APIView):
         if result["errors"]:
             return Response(summary, status=status.HTTP_400_BAD_REQUEST)
         return Response(importer.commit(team, request.user, result, mark_as_flashed), status=status.HTTP_201_CREATED)
+
+
+@require_GET
+def map_tile(request, z, x, y):
+    """OSM tile relayed through the server (see tiles.py). Members only: not an open proxy."""
+    user = request.user
+    if not (user.is_authenticated and user.team_id):
+        return HttpResponse(status=403)
+    if not tiles.is_valid(z, x, y):
+        return HttpResponse(status=404)
+    try:
+        path = tiles.get_tile(z, x, y)
+    except tiles.TileError:
+        return HttpResponse(status=502)
+    response = FileResponse(path.open("rb"), content_type="image/png")
+    # Let the browser keep tiles for a day instead of asking again on every reload.
+    response["Cache-Control"] = "private, max-age=86400"
+    return response
