@@ -1,0 +1,40 @@
+{% extends "admin/invaders/invader/_import_base.html" %}
+
+{% block content %}
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      {% for field in form %}
+        <div class="form-row{% if field.errors %} errors{% endif %}">
+          {{ field.errors }}
+          <div class="flex-container">{{ field.label_tag }} {{ field }}</div>
+          {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+        </div>
+      {% endfor %}
+    </fieldset>
+    <div class="submit-row">
+      <input type="submit" class="default" value="Prévisualiser l'import">
+    </div>
+  </form>
+
+  <div class="module">
+    <h2>Format du fichier</h2>
+    <div style="padding: 0 10px 10px">
+      <p>Une liste JSON d'invaders. Seuls <code>name</code>, <code>lat</code>, <code>lng</code> et <code>points</code> sont obligatoires :</p>
+      <pre>[
+  {
+    "name": "PA_223", "lat": 48.848, "lng": 2.376, "points": 20,
+    "status": "ok", "address1": "30 Rue Abel", "address2": "", "zip": "75012", "comment": "",
+    "city": {"name": "Paris", "prefix": "PA", "country": "France"},
+    "flashed_by": ["membre@example.org", {"email": "autre@example.org", "flashed_at": "2025-06-01"}]
+  }
+]</pre>
+      <ul>
+        <li><strong>status</strong> : <code>ok</code>, <code>degraded</code>, <code>destroyed</code>, <code>hidden</code> ou <code>unknown</code>.</li>
+        <li><strong>city</strong> : utilisée seulement si aucune ville de l'équipe n'a ce préfixe ; elle est alors créée (pays « France » par défaut).</li>
+        <li><strong>flashed_by</strong> : membres de l'équipe qui l'ont flashé (date du jour par défaut). Les flashs existants sont conservés.</li>
+        <li>Un nom déjà connu dans l'équipe met l'invader à jour. L'import est tout ou rien : la moindre erreur bloque l'enregistrement.</li>
+      </ul>
+    </div>
+  </div>
+{% endblock %}

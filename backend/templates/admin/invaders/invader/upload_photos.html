@@ -1,0 +1,31 @@
+{% extends "admin/invaders/invader/_import_base.html" %}
+
+{% block content %}
+  {% if report %}
+    <div class="module">
+      <h2>Résultat</h2>
+      <div style="padding: 0 10px 10px">
+        <p>{{ report.imported|length }} photo(s) ajoutée(s), {{ report.skipped|length }} ignorée(s) (l'invader avait déjà une photo), {{ report.problems|length }} problème(s).</p>
+        {% if report.skipped %}<p><strong>Ignorées :</strong> {{ report.skipped|join:", " }}</p>{% endif %}
+        {% if report.problems %}<ul class="errorlist">{% for problem in report.problems %}<li>{{ problem }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    <fieldset class="module aligned">
+      {% for field in form %}
+        <div class="form-row{% if field.errors %} errors{% endif %}">
+          {{ field.errors }}
+          <div class="flex-container">{{ field.label_tag }} {{ field }}</div>
+          {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+        </div>
+      {% endfor %}
+    </fieldset>
+    <div class="submit-row">
+      <input type="submit" class="default" value="Envoyer les photos">
+    </div>
+  </form>
+  <p class="help">Jusqu'à 100 photos par envoi. Pour importer toutes les photos d'un export de l'ancienne version, utilisez plutôt la commande <code>manage.py importimages</code>.</p>
+{% endblock %}

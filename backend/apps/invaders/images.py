@@ -32,28 +32,45 @@ class UploadTo:
         return isinstance(other, UploadTo) and other.folder == self.folder
 
 
-def normalize_image(uploaded):
-    """Apply EXIF rotation, center-crop to a square of at most MAX_SIZE and re-encode as JPEG."""
+def normalize_image(uploaded, square=True):
+    """Apply EXIF rotation, fit in MAX_SIZE and re-encode as JPEG.
+
+    square=True center-crops to a square (app uploads); False keeps the original
+    proportions (bulk import of existing photos).
+    """
     with warnings.catch_warnings():
         # Pillow only warns between MAX_IMAGE_PIXELS and twice that: treat it as an error.
         warnings.simplefilter("error", Image.DecompressionBombWarning)
         try:
-            return _normalize(uploaded)
+            return _normalize(uploaded, square)
         except (Image.DecompressionBombError, Image.DecompressionBombWarning) as exc:
             raise InvalidImage("Cette image est trop grande.") from exc
         except OSError as exc:
             raise InvalidImage("Cette image est illisible ou corrompue.") from exc
 
 
-def _normalize(uploaded):
+def _to_rgb(image):
+    """JPEG has no transparency: transparent areas become white rather than black."""
+    if image.mode in ("RGBA", "LA") or (image.mode == "P" and "transparency" in image.info):
+        image = image.convert("RGBA")
+        background = Image.new("RGB", image.size, "white")
+        background.paste(image, mask=image.getchannel("A"))
+        return background
+    return image.convert("RGB")
+
+
+def _normalize(uploaded, square):
     with Image.open(uploaded) as image:
         if image.width * image.height > MAX_PIXELS:
             raise InvalidImage("Cette image est trop grande.")
         # JPEG only: decode at a reduced scale when possible, much faster and lighter.
         image.draft("RGB", (MAX_SIZE * 2, MAX_SIZE * 2))
-        image = ImageOps.exif_transpose(image).convert("RGB")
-        size = min(*image.size, MAX_SIZE)
-        image = ImageOps.fit(image, (size, size), method=Image.Resampling.LANCZOS)
+        image = _to_rgb(ImageOps.exif_transpose(image))
+        if square:
+            size = min(*image.size, MAX_SIZE)
+            image = ImageOps.fit(image, (size, size), method=Image.Resampling.LANCZOS)
+        else:
+            image.thumbnail((MAX_SIZE, MAX_SIZE), Image.Resampling.LANCZOS)
         buffer = BytesIO()
         image.save(buffer, format="JPEG", quality=JPEG_QUALITY, optimize=True)
     return ContentFile(buffer.getvalue(), name="image.jpg")

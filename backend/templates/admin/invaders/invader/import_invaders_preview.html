@@ -1,0 +1,62 @@
+{% extends "admin/invaders/invader/_import_base.html" %}
+
+{% block content %}
+  <p>Équipe <strong>{{ team }}</strong>, auteur <strong>{{ author.display_name }}</strong>{% if mark_as_flashed %}, invaders marqués comme flashés par l'auteur{% endif %}.</p>
+
+  <div class="module">
+    <h2>Résumé</h2>
+    <table style="width: 100%">
+      <tbody>
+        <tr><th>Invaders à créer</th><td>{{ summary.counts.to_create }}</td></tr>
+        <tr><th>Invaders à mettre à jour</th><td>{{ summary.counts.to_update }}</td></tr>
+        <tr><th>Invaders inchangés</th><td>{{ summary.counts.unchanged }}</td></tr>
+        <tr><th>Villes à créer</th><td>{{ summary.counts.cities_to_create }}{% if summary.cities_to_create %} :
+          {% for city in summary.cities_to_create %}{{ city.name }} ({{ city.prefix }}, {{ city.country }}){% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}</td></tr>
+        <tr><th>Pays à créer</th><td>{{ summary.countries_to_create|join:", "|default:"aucun" }}</td></tr>
+        <tr><th>Flashs du fichier</th><td>{{ summary.counts.flashes }}</td></tr>
+        <tr><th>Erreurs</th><td>{{ summary.counts.errors }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  {% if errors %}
+    <div class="module">
+      <h2>Erreurs{% if summary.counts.errors > errors|length %} ({{ errors|length }} premières sur {{ summary.counts.errors }}){% endif %}</h2>
+      <table style="width: 100%">
+        <thead><tr><th>Ligne</th><th>Invader</th><th>Problème</th></tr></thead>
+        <tbody>
+          {% for error in errors %}
+            <tr><td>{{ error.index|add:1 }}</td><td>{{ error.name|default:"—" }}</td><td>{{ error.errors }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="errornote">Corrigez le fichier puis <a href="{% url 'admin:invaders_invader_import' %}">recommencez</a> : rien ne sera importé tant qu'il reste des erreurs.</p>
+  {% else %}
+    {% if updates %}
+      <div class="module">
+        <h2>Mises à jour{% if summary.counts.to_update > updates|length %} ({{ updates|length }} premières sur {{ summary.counts.to_update }}){% endif %}</h2>
+        <table style="width: 100%">
+          <thead><tr><th>Invader</th><th>Modifications</th></tr></thead>
+          <tbody>
+            {% for update in updates %}
+              <tr><td>{{ update.name }}</td><td>{% for field, change in update.changes.items %}{{ field }} : {{ change.old }} → {{ change.new }}{% if not forloop.last %} ; {% endif %}{% endfor %}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% endif %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="step" value="confirm">
+      <input type="hidden" name="token" value="{{ token }}">
+      <input type="hidden" name="team" value="{{ team.pk }}">
+      <input type="hidden" name="author" value="{{ author.pk }}">
+      {% if mark_as_flashed %}<input type="hidden" name="mark_as_flashed" value="on">{% endif %}
+      <div class="submit-row">
+        <input type="submit" class="default" value="Confirmer l'import">
+        <a href="{% url 'admin:invaders_invader_import' %}" class="closelink">Annuler</a>
+      </div>
+    </form>
+  {% endif %}
+{% endblock %}
