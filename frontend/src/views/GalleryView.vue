@@ -5,6 +5,7 @@ import { invadersApi } from '@/api/endpoints'
 import { type Invader, STATUS_LABELS } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
+import InvaderPhoto from '@/components/InvaderPhoto.vue'
 import { useFiltersStore } from '@/stores/filters'
 import { useInvadersStore } from '@/stores/invaders'
 import { usePlacesStore } from '@/stores/places'
@@ -163,7 +164,7 @@ function state(invader: Invader) {
       <li v-for="invader in items" :key="invader.id">
         <RouterLink :to="{ name: 'gallery-invader', params: { id: invader.id } }" class="tile" :class="`tile--${state(invader)}`">
           <div class="tile__visual">
-            <img v-if="invader.image" :src="invader.image" :alt="`Photo de ${invader.name}`" loading="lazy" />
+            <InvaderPhoto v-if="invader.image" :src="invader.image" :alt="`Photo de ${invader.name}`" lazy class="tile__photo" />
             <span v-else class="tile__placeholder" aria-hidden="true" />
             <span v-if="invader.my_flashed_at" class="tile__badge">
               <AppIcon name="check" :size="14" /> Flashé
@@ -267,10 +268,8 @@ function state(invader: Invader) {
   background: var(--bg);
 }
 
-.tile__visual img {
+.tile__photo {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .tile__placeholder {

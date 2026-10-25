@@ -8,6 +8,8 @@ import AppIcon from '@/components/AppIcon.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import FieldErrors from '@/components/FieldErrors.vue'
 import InvaderHistory from '@/components/InvaderHistory.vue'
+import InvaderPhoto from '@/components/InvaderPhoto.vue'
+import { directionsTo } from '@/composables/directions'
 import { formatDate, today } from '@/composables/format'
 import { useOptionalMapContext } from '@/composables/mapContext'
 import { useFormErrors } from '@/composables/useFormErrors'
@@ -39,14 +41,7 @@ const address = computed(() => {
   // Only show the locality when there is an actual street address or zip code.
   return [address1, address2, address1 || address2 || zip ? locality : ''].filter(Boolean)
 })
-const directions = computed(() => {
-  if (!invader.value) return null
-  const destination = `${invader.value.lat},${invader.value.lng}`
-  return {
-    google: `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=walking`,
-    apple: `https://maps.apple.com/?daddr=${destination}&dirflg=w`,
-  }
-})
+const directions = computed(() => (invader.value ? directionsTo(invader.value) : null))
 
 async function load(id: number) {
   invader.value = null
@@ -115,7 +110,7 @@ async function remove() {
     <p v-else-if="!invader" class="muted">Chargement…</p>
 
     <div v-else class="detail">
-      <img v-if="invader.image" :src="invader.image" :alt="`Photo de ${invader.name}`" class="detail__image" />
+      <InvaderPhoto v-if="invader.image" :src="invader.image" :alt="`Photo de ${invader.name}`" class="detail__image" />
 
       <dl class="detail__facts">
         <div>
@@ -179,14 +174,16 @@ async function remove() {
         </ul>
       </section>
 
-      <div v-if="directions" class="detail__directions">
-        <a :href="directions.google" target="_blank" rel="noopener" class="btn">
-          <AppIcon name="route" :size="18" /> Google Maps
-        </a>
-        <a :href="directions.apple" target="_blank" rel="noopener" class="btn">
-          <AppIcon name="route" :size="18" /> Plans
-        </a>
-      </div>
+      <a
+        v-if="directions"
+        :href="directions.url"
+        target="_blank"
+        rel="noopener"
+        class="btn btn--block"
+        :title="directions.app === 'apple' ? 'Ouvrir dans Plans' : 'Ouvrir dans Google Maps'"
+      >
+        <AppIcon name="route" :size="18" /> Itinéraire
+      </a>
 
       <RouterLink
         v-if="!mapContext"
@@ -226,9 +223,7 @@ async function remove() {
 
 .detail__image {
   width: min(100%, 320px);
-  aspect-ratio: 1;
   align-self: center;
-  object-fit: cover;
   border-radius: 10px;
 }
 
@@ -322,14 +317,12 @@ async function remove() {
   border-bottom: 1px solid var(--border);
 }
 
-.detail__directions,
 .detail__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.detail__directions .btn,
 .detail__actions .btn {
   flex: 1;
 }

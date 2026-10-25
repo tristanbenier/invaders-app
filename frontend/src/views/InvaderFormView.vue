@@ -8,6 +8,7 @@ import AppIcon from '@/components/AppIcon.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import FieldErrors from '@/components/FieldErrors.vue'
 import ImageCropper from '@/components/ImageCropper.vue'
+import InvaderPhoto from '@/components/InvaderPhoto.vue'
 import { type LatLng, useMapContext } from '@/composables/mapContext'
 import { useFormErrors } from '@/composables/useFormErrors'
 import { useInvadersStore } from '@/stores/invaders'
@@ -354,7 +355,7 @@ function close() {
 
       <div class="field">
         <span>Photo</span>
-        <img v-if="imagePreview" :src="imagePreview" alt="Aperçu de la photo" class="form__preview" />
+        <InvaderPhoto v-if="imagePreview" :src="imagePreview" alt="Aperçu de la photo" class="form__preview" />
         <div class="form__location-actions">
           <label class="btn">
             {{ imagePreview ? 'Changer la photo' : 'Ajouter une photo' }}
@@ -444,8 +445,6 @@ function close() {
 
 .form__preview {
   width: min(100%, 240px);
-  aspect-ratio: 1;
-  object-fit: cover;
   border-radius: 10px;
 }
 
