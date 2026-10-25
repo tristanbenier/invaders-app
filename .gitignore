@@ -38,3 +38,6 @@ coverage/
 .idea/
 .DS_Store
 
+# Me
+data/**
+

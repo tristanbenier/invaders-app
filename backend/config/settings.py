@@ -105,6 +105,8 @@ DJANGO_VITE = {
         "dev_server_port": env.int("DJANGO_VITE_DEV_SERVER_PORT", default=5173),
     }
 }
+# Built mode does not use django-vite (no Vite manifest): silence its "manifest missing" check.
+SILENCED_SYSTEM_CHECKS = ["django_vite.W001"]
 
 MEDIA_URL = "media/"
 MEDIA_ROOT = Path(env("MEDIA_ROOT", default=str(BASE_DIR / "media")))
@@ -140,7 +142,7 @@ if not DEBUG:
     # subdomains are not ours to commit to HTTPS.
     SECURE_HSTS_INCLUDE_SUBDOMAINS = False
     SECURE_HSTS_PRELOAD = False
-    SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
+    SILENCED_SYSTEM_CHECKS += ["security.W005", "security.W021"]
 
 LOGGING = {
     "version": 1,
