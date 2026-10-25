@@ -43,10 +43,20 @@ class SpaView(TemplateView):
         }
 
 
+def _dist_file(name, content_type):
+    path = settings.FRONTEND_DIST_DIR / name
+    if not path.is_file():
+        raise Http404
+    return FileResponse(path.open("rb"), content_type=content_type)
+
+
 @never_cache
 def service_worker(request):
     """The service worker must be served from the root to control the whole site."""
-    path = settings.FRONTEND_DIST_DIR / "sw.js"
-    if not path.is_file():
-        raise Http404
-    return FileResponse(path.open("rb"), content_type="text/javascript")
+    return _dist_file("sw.js", "text/javascript")
+
+
+@never_cache
+def web_manifest(request):
+    """Also at the root: the service worker precaches it there (vite-plugin-pwa adds that entry)."""
+    return _dist_file("manifest.webmanifest", "application/manifest+json")

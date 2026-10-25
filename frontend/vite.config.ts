@@ -17,7 +17,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       // Registered in main.ts: the worker is served by Django at /sw.js to control the whole site.
       injectRegister: false,
-      includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
+      // Icons are already precached by globPatterns below (with the /static/ prefix).
+      includeManifestIcons: false,
       manifest: {
         name: 'Invaders',
         short_name: 'Invaders',
@@ -40,10 +41,10 @@ export default defineConfig({
         // Only static files are cached: the page is rendered by Django and API data must stay
         // fresh (no offline mode in V1).
         globPatterns: ['**/*.{js,css,svg,png,woff2}'],
-        globIgnores: ['sw.js'],
+        // Not the bundles: their URL carries a content hash (?v=…) and the browser HTTP cache
+        // keeps them, while a precached copy would be served stale after each new build.
+        globIgnores: ['sw.js', 'bundle.min.js', 'bundle.min.css'],
         modifyURLPrefix: { '': '/static/' },
-        // The page loads /static/bundle.min.js?v=<hash>: match it to the precached file.
-        ignoreURLParametersMatching: [/^v$/],
         navigateFallback: null,
         inlineWorkboxRuntime: true,
         runtimeCaching: [

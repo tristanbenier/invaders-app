@@ -6,7 +6,7 @@ from django.urls import include, path, re_path
 from apps.invaders.views import map_tile
 
 from .ratelimit import limit_posts_by_ip
-from .views import SpaView, service_worker
+from .views import SpaView, service_worker, web_manifest
 
 urlpatterns = [
     # Before admin.site.urls: brute-force protection for the admin login form.
@@ -18,6 +18,7 @@ urlpatterns = [
     path("api/", include("apps.accounts.urls")),
     path("api/", include("apps.invaders.urls")),
     path("sw.js", service_worker, name="service-worker"),
+    path("manifest.webmanifest", web_manifest, name="web-manifest"),
     path("tiles/<int:z>/<int:x>/<int:y>.png", map_tile, name="map-tile"),
 ]
 
