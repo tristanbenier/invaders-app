@@ -23,8 +23,9 @@
 	# Vue build and icons, collected by `manage.py collectstatic`.
 	handle_path /static/* {
 		root * /srv/invaders/backend/staticfiles
-		@hashed path /assets/*
-		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		# The bundles are linked with ?v=<content hash>: a new build changes the URL.
+		@versioned query v=*
+		header @versioned Cache-Control "public, max-age=31536000, immutable"
 		file_server
 	}
 

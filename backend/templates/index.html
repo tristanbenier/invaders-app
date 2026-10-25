@@ -13,8 +13,15 @@
     <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}" />
     <link rel="apple-touch-icon" href="{% static 'icons/apple-touch-icon.png' %}" />
     {% if not vite_dev_mode %}<link rel="manifest" href="{% static 'manifest.webmanifest' %}" />{% endif %}
-    {% vite_hmr_client %}
-    {% vite_asset 'src/main.ts' %}
+    {% if vite_dev_mode %}
+      {# Scripts from the Vite dev server (hot reload). #}
+      {% vite_hmr_client %}
+      {% vite_asset 'src/main.ts' %}
+    {% else %}
+      {# The two built bundles (frontend/dist), versioned by content hash. #}
+      <link rel="stylesheet" href="{% static 'bundle.min.css' %}?v={{ bundle_version }}" />
+      <script type="module" src="{% static 'bundle.min.js' %}?v={{ bundle_version }}"></script>
+    {% endif %}
   </head>
   <body>
     <div id="app"></div>

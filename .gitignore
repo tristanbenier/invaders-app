@@ -24,9 +24,10 @@ media/
 tile_cache/
 cache/
 
-# Frontend
+# Frontend (frontend/dist is committed: production does not build, see deploy/README.md)
 node_modules/
 dist/
+!frontend/dist/
 dev-dist/
 .vite/
 *.tsbuildinfo

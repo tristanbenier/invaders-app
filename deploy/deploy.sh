@@ -12,9 +12,12 @@ as_app git -C "$APP_DIR" pull --ff-only
 echo "==> Backend dependencies"
 as_app "$APP_DIR/backend/.venv/bin/pip" install --quiet -r "$APP_DIR/backend/requirements.txt"
 
-echo "==> Building the Vue app"
-as_app npm --prefix "$APP_DIR/frontend" ci --no-audit --no-fund
-as_app npm --prefix "$APP_DIR/frontend" run build
+# The Vue app is built on the developer machine and committed (frontend/dist):
+# the server never runs Node, which keeps a 1 GB RAM VM enough.
+if [ ! -f "$APP_DIR/frontend/dist/bundle.min.js" ]; then
+  echo "frontend/dist is missing: run \`make build\` locally and commit it." >&2
+  exit 1
+fi
 
 echo "==> Database migrations and static files"
 cd "$APP_DIR/backend"

@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Refuse a commit whose frontend/dist (committed, served as is in production) does not match
+# a fresh build of the frontend sources. Enable once with `make hooks`.
+set -euo pipefail
+
+ROOT=$(git rev-parse --show-toplevel)
+cd "$ROOT"
+
+# Fast path: nothing staged in frontend/ (sources, config, lockfile or the bundle itself).
+if ! git diff --cached --name-only -- frontend | grep -q .; then
+  exit 0
+fi
+
+if [ ! -d frontend/node_modules ]; then
+  echo "pre-commit: frontend/node_modules is missing, run: npm --prefix frontend install" >&2
+  exit 1
+fi
+
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+
+# Build the frontend as it is in the working tree into a scratch directory...
+if ! (cd frontend && npx vite build --outDir "$TMP/build" --emptyOutDir --logLevel error) >"$TMP/build.log" 2>&1; then
+  cat "$TMP/build.log" >&2
+  echo "pre-commit: the frontend build failed." >&2
+  exit 1
+fi
+
+# ...and compare it with the bundle being committed (the index, not the working tree).
+mkdir -p "$TMP/index"
+git ls-files -z -- frontend/dist | xargs -0 -r git checkout-index --prefix="$TMP/index/" --
+
+if ! diff -rq "$TMP/build" "$TMP/index/frontend/dist" >"$TMP/diff.txt" 2>&1; then
+  echo "pre-commit: frontend/dist is not up to date with the frontend sources:" >&2
+  sed -e "s#$TMP/build#(fresh build)#g" -e "s#$TMP/index/frontend/dist#frontend/dist#g" "$TMP/diff.txt" | head -20 >&2
+  echo >&2
+  echo "Run \`make build\`, then \`git add frontend/dist\` and commit again." >&2
+  exit 1
+fi

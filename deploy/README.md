@@ -29,8 +29,6 @@ Fais pointer un nom vers l'IP publique de la VM, par exemple un sous-domaine gra
 
 ```bash
 sudo apt update && sudo apt install -y git python3-venv python3-dev build-essential
-# Node.js 24 (pour construire l'app Vue)
-curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash - && sudo apt install -y nodejs
 # Caddy
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
@@ -91,13 +89,15 @@ sudo -u invaders .venv/bin/python manage.py shell -c "from apps.accounts.models 
 
 ## Mises à jour
 
+L'app Vue est compilée sur ta machine et commitée (`frontend/dist/`) : le serveur n'a pas besoin de Node.js, et une VM à 1 Go de RAM suffit. Le hook Git `pre-commit` (activé par `make hooks`) refuse un commit dont le bundle ne correspond pas aux sources : lance `make build`, puis `git add frontend/dist`.
+
 Après un `git push` sur `main` :
 
 ```bash
 sudo /srv/invaders/deploy/deploy.sh
 ```
 
-Le script récupère le code, installe les dépendances, reconstruit l'app Vue, applique les migrations, collecte les fichiers statiques, vérifie la configuration (`check --deploy`) et redémarre.
+Le script récupère le code, installe les dépendances Python, applique les migrations, collecte les fichiers statiques, vérifie la configuration (`check --deploy`) et redémarre.
 
 ## Exploitation
 

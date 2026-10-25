@@ -95,14 +95,14 @@ FRONTEND_DIST_DIR = FRONTEND_DIR / "dist"
 # Built files first; frontend/public also serves favicon and icons before any build.
 STATICFILES_DIRS = [path for path in (FRONTEND_DIST_DIR, FRONTEND_DIR / "public") if path.exists()]
 
-# Dev mode: scripts come from the Vite dev server (hot reload, `npm run dev`).
-# Otherwise: hashed files from the Vite build manifest (`npm run build`).
+# Dev mode: scripts come from the Vite dev server (hot reload, `npm run dev`) via django-vite.
+# Otherwise: the two built bundles frontend/dist/bundle.min.{js,css} (`make build`), linked
+# directly by templates/index.html.
 DJANGO_VITE = {
     "default": {
         "dev_mode": env.bool("DJANGO_VITE_DEV_MODE", default=DEBUG),
         "dev_server_host": env("DJANGO_VITE_DEV_SERVER_HOST", default="localhost"),
         "dev_server_port": env.int("DJANGO_VITE_DEV_SERVER_PORT", default=5173),
-        "manifest_path": FRONTEND_DIST_DIR / ".vite" / "manifest.json",
     }
 }
 

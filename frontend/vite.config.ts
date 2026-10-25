@@ -42,6 +42,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,svg,png,woff2}'],
         globIgnores: ['sw.js'],
         modifyURLPrefix: { '': '/static/' },
+        // The page loads /static/bundle.min.js?v=<hash>: match it to the precached file.
+        ignoreURLParametersMatching: [/^v$/],
         navigateFallback: null,
         inlineWorkboxRuntime: true,
         runtimeCaching: [
@@ -65,9 +67,19 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   build: {
-    // Read by django-vite to inject the hashed files into the Django page.
-    manifest: true,
-    rollupOptions: { input: 'src/main.ts' },
+    // Exactly two app files with fixed names, so commits of frontend/dist stay readable:
+    // dist/bundle.min.js (lazy routes inlined) and dist/bundle.min.css. The Django page adds a
+    // content hash to their URL (?v=…) to bust browser caches.
+    cssCodeSplit: false,
+    rollupOptions: {
+      input: 'src/main.ts',
+      output: {
+        codeSplitting: false,
+        entryFileNames: 'bundle.min.js',
+        assetFileNames: (asset) =>
+          asset.names.some((name) => name.endsWith('.css')) ? 'bundle.min.css' : 'assets/[name]-[hash][extname]',
+      },
+    },
   },
   server: {
     port: 5173,
