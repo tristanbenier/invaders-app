@@ -1,7 +1,8 @@
 from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path, re_path
+from django.views.decorators.cache import cache_control
+from django.views.static import serve
 
 from apps.invaders.views import map_tile
 
@@ -22,8 +23,15 @@ urlpatterns = [
     path("tiles/<int:z>/<int:x>/<int:y>.png", map_tile, name="map-tile"),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Uploaded photos (random, unguessable file names); served by Caddy when it is in front.
+if settings.DEBUG or settings.SERVE_FILES:
+    urlpatterns += [
+        re_path(
+            rf"^{settings.MEDIA_URL.strip('/')}/(?P<path>.*)$",
+            cache_control(public=True, max_age=86400)(serve),
+            {"document_root": settings.MEDIA_ROOT},
+        )
+    ]
 
 # Every other path is a Vue Router route: serve the app page (keep this last).
 urlpatterns += [re_path(r"^(?!api/|admin/|static/|media/|tiles/).*$", SpaView.as_view(), name="spa")]

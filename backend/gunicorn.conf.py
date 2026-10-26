@@ -2,8 +2,11 @@
 
 import os
 
-# Caddy forwards requests here; never expose this port publicly.
+# Caddy forwards requests here; never expose this port publicly. On alwaysdata the address
+# comes from the site's IP and PORT (deploy/alwaysdata/start.sh).
 bind = os.environ.get("GUNICORN_BIND", "127.0.0.1:8001")
+# Lets deploy/alwaysdata/deploy.sh reload the code with a HUP signal.
+pidfile = os.environ.get("GUNICORN_PIDFILE") or None
 wsgi_app = "config.wsgi:application"
 
 # Threads, not just processes: a tile missing from the cache waits on OpenStreetMap,
@@ -19,5 +22,5 @@ max_requests_jitter = 200
 
 accesslog = "-"
 errorlog = "-"
-# Caddy runs on the same machine and sets X-Forwarded-Proto.
-forwarded_allow_ips = "127.0.0.1"
+# The proxy that sets X-Forwarded-Proto: Caddy on the same machine, alwaysdata's proxy otherwise.
+forwarded_allow_ips = os.environ.get("GUNICORN_FORWARDED_ALLOW_IPS", "127.0.0.1")

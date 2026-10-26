@@ -17,6 +17,8 @@ __pycache__/
 # SQLite WAL mode side files
 *.sqlite3-wal
 *.sqlite3-shm
+# Gunicorn PID file (deploy/alwaysdata)
+*.pid
 
 # Django: collected static files, uploaded photos and cached map tiles
 staticfiles/

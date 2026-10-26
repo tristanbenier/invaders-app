@@ -29,7 +29,10 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "config.middleware.client_ip_middleware",
     "django.middleware.security.SecurityMiddleware",
+    "config.middleware.request_size_middleware",
+    "config.middleware.security_headers_middleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -88,7 +91,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
-# Filled by `collectstatic` and served directly by Caddy in production.
+# Filled by `collectstatic`; served by Caddy in production, or by WhiteNoise (SERVE_FILES).
 STATIC_ROOT = Path(env("STATIC_ROOT", default=str(BASE_DIR / "staticfiles")))
 # The Vue app, built by Vite into frontend/dist (served under /static/).
 FRONTEND_DIST_DIR = FRONTEND_DIR / "dist"
@@ -111,6 +114,12 @@ SILENCED_SYSTEM_CHECKS = ["django_vite.W001"]
 MEDIA_URL = "media/"
 MEDIA_ROOT = Path(env("MEDIA_ROOT", default=str(BASE_DIR / "media")))
 
+# Django itself serves /static/ (WhiteNoise) and /media/ when no front server does it
+# (alwaysdata). Behind Caddy, keep False: Caddy serves both directly from disk.
+SERVE_FILES = env.bool("SERVE_FILES", default=False)
+if SERVE_FILES:
+    MIDDLEWARE.insert(MIDDLEWARE.index("config.middleware.security_headers_middleware") + 1, "whitenoise.middleware.WhiteNoiseMiddleware")
+
 # Shared by all Gunicorn workers (throttling, geocoding results): the default in-memory
 # cache would be per process. Files avoid extra writes to the SQLite database.
 CACHES = {
@@ -132,8 +141,16 @@ CSRF_FAILURE_VIEW = "config.exceptions.csrf_failure"
 # servers block requests without a Referer, which Django's default ("same-origin") removes.
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
+# Header holding the visitor's IP, set by the host's proxy (alwaysdata: X-Real-IP). Leave empty
+# behind Caddy (NUM_PROXIES handles X-Forwarded-For) or when Django is reached directly.
+CLIENT_IP_HEADER = env("CLIENT_IP_HEADER", default="")
+# Larger request bodies are refused with 413 (config/middleware.py).
+MAX_REQUEST_BODY_MB = env.int("MAX_REQUEST_BODY_MB", default=15)
+# Content-Security-Policy and Permissions-Policy. Off in dev: the scripts come from Vite.
+SECURITY_HEADERS = env.bool("SECURITY_HEADERS", default=not DEBUG)
+
 if not DEBUG:
-    # Behind Caddy, which terminates HTTPS and sets X-Forwarded-Proto.
+    # Behind a proxy (Caddy, alwaysdata) that terminates HTTPS and sets X-Forwarded-Proto.
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
     # Start low and raise (e.g. 31536000) once HTTPS is known to work: browsers remember it.

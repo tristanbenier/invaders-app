@@ -96,3 +96,27 @@ class CsrfAndLoginTests(ApiTestCase):
         codes = [Client().post("/admin/login/", {"username": "admin@example.test", "password": "wrong"}).status_code for _ in range(12)]
         self.assertEqual(codes[:10], [200] * 10)
         self.assertEqual(codes[10:], [429, 429])
+
+
+class HostingMiddlewareTests(ApiTestCase):
+    def test_client_ip_header_gives_each_visitor_its_own_throttle(self):
+        def login(ip):
+            return Client(HTTP_X_REAL_IP=ip).post("/admin/login/", {"username": "admin@example.test", "password": "wrong"}).status_code
+
+        with self.settings(CLIENT_IP_HEADER="X-Real-IP"):
+            codes = [login("203.0.113.1") for _ in range(11)]
+            self.assertEqual(codes[-1], 429)
+            self.assertEqual(login("203.0.113.2"), 200)
+
+    def test_oversized_body_is_refused(self):
+        with self.settings(MAX_REQUEST_BODY_MB=1):
+            response = Client().post("/api/auth/login/", data=b"x" * (1024 * 1024 + 1), content_type="application/json")
+        self.assertEqual(response.status_code, 413)
+
+    def test_security_headers_skip_the_admin(self):
+        with self.settings(SECURITY_HEADERS=True):
+            page = Client().get("/")
+            admin = Client().get("/admin/login/")
+        self.assertIn("script-src 'self'", page["Content-Security-Policy"])
+        self.assertIn("geolocation=(self)", page["Permissions-Policy"])
+        self.assertNotIn("Content-Security-Policy", admin)

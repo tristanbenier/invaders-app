@@ -9,9 +9,12 @@ from PIL import Image, ImageOps
 # Images are square: the app crops them before upload, the server enforces it.
 MAX_SIZE = 1200
 JPEG_QUALITY = 85
-# Largest accepted source image: enough for 48 MP phone photos, refuses decompression bombs
-# (a small file that would expand to gigabytes of memory once decoded).
-MAX_PIXELS = 60_000_000
+# Largest accepted source image, refusing decompression bombs (a small file that would expand
+# to gigabytes of memory once decoded). A PNG is decoded in full (up to 4 bytes per pixel): this
+# keeps one upload under about 100 MB on a 256 MB host. JPEGs are decoded at a reduced scale,
+# so larger ones (48 MP phone photos) are accepted up to JPEG_MAX_PIXELS.
+MAX_PIXELS = 25_000_000
+JPEG_MAX_PIXELS = 60_000_000
 
 
 class InvalidImage(Exception):
@@ -61,10 +64,12 @@ def _to_rgb(image):
 
 def _normalize(uploaded, square):
     with Image.open(uploaded) as image:
-        if image.width * image.height > MAX_PIXELS:
+        limit = JPEG_MAX_PIXELS if image.format == "JPEG" else MAX_PIXELS
+        if image.width * image.height > limit:
             raise InvalidImage("Cette image est trop grande.")
-        # JPEG only: decode at a reduced scale when possible, much faster and lighter.
-        image.draft("RGB", (MAX_SIZE * 2, MAX_SIZE * 2))
+        # Shrink right after decoding (JPEG: decoded at a reduced scale), so the copies made
+        # below stay small. In place: the EXIF orientation is kept for exif_transpose.
+        image.thumbnail((MAX_SIZE * 2, MAX_SIZE * 2))
         image = _to_rgb(ImageOps.exif_transpose(image))
         if square:
             size = min(*image.size, MAX_SIZE)

@@ -7,6 +7,8 @@ Cible : une petite VM Ubuntu 24.04 (par exemple Oracle Cloud « Always Free », 
 - **SQLite**, les photos et le cache des tuiles sur le disque de la VM ;
 - une **sauvegarde** chaque nuit (`invaders-backup.timer`).
 
+Pour l'offre gratuite d'alwaysdata (sans VM ni Caddy), suis plutôt [alwaysdata/README.md](alwaysdata/README.md).
+
 Tous les chemins supposent l'application dans `/srv/invaders`, exécutée par l'utilisateur système `invaders`.
 
 ## 1. Créer la VM et ouvrir les ports
