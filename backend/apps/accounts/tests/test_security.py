@@ -120,3 +120,13 @@ class HostingMiddlewareTests(ApiTestCase):
         self.assertIn("script-src 'self'", page["Content-Security-Policy"])
         self.assertIn("geolocation=(self)", page["Permissions-Policy"])
         self.assertNotIn("Content-Security-Policy", admin)
+
+
+class RoutingTests(ApiTestCase):
+    def test_django_prefixes_without_slash_are_not_app_pages(self):
+        response = Client().get("/admin")
+        self.assertRedirects(response, "/admin/", status_code=301, fetch_redirect_response=False)
+
+    def test_app_routes_get_the_app_page(self):
+        self.assertEqual(Client().get("/administration").status_code, 200)
+        self.assertEqual(Client().get("/gallery").status_code, 200)

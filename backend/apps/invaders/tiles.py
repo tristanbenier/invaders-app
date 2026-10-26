@@ -71,7 +71,8 @@ def get_tile(z, x, y):
         return path
     try:
         _write_atomically(path, _download(z, x, y))
-    except TileError:
+    except TileError as exc:
+        logger.warning("Tile %s/%s/%s not fetched from OSM: %s", z, x, y, exc)
         # OSM unreachable: a stale tile is better than a hole in the map.
         if is_cached:
             return path

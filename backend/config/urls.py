@@ -33,5 +33,6 @@ if settings.DEBUG or settings.SERVE_FILES:
         )
     ]
 
-# Every other path is a Vue Router route: serve the app page (keep this last).
-urlpatterns += [re_path(r"^(?!api/|admin/|static/|media/|tiles/).*$", SpaView.as_view(), name="spa")]
+# Every other path is a Vue Router route: serve the app page (keep this last). Django's own
+# prefixes are excluded with or without a trailing slash, so /admin gets APPEND_SLASH's redirect.
+urlpatterns += [re_path(r"^(?!(?:api|admin|static|media|tiles)(?:/|$)).*$", SpaView.as_view(), name="spa")]
