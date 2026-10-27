@@ -1,9 +1,13 @@
 .PHONY: dev build hooks lan
 
-# Django (http://localhost:8000) and the Vite dev server together; Ctrl+C stops both.
+# Django's port comes from FRONTEND_URL in the root .env (last value wins, like Django reads it).
+FRONTEND_URL := $(shell sed -n 's/^FRONTEND_URL=//p' .env 2>/dev/null | tail -n 1)
+DJANGO_PORT := $(or $(shell echo '$(FRONTEND_URL)' | sed -nE 's|^https?://[^/]*:([0-9]+).*|\1|p'),8080)
+
+# Django (FRONTEND_URL) and the Vite dev server together; Ctrl+C stops both.
 dev:
 	@trap 'kill 0' INT TERM EXIT; \
-	(cd backend && .venv/bin/python manage.py runserver) & \
+	(cd backend && .venv/bin/python manage.py runserver $(DJANGO_PORT)) & \
 	npm --prefix frontend run dev & \
 	wait
 
@@ -16,12 +20,12 @@ hooks:
 	git config core.hooksPath .githooks
 
 # Test on another device of the local network (e.g. a phone): built app served by Django on
-# 0.0.0.0:8000. Plain HTTP: geolocation, service worker and app install need HTTPS and stay off.
+# 0.0.0.0 (port of FRONTEND_URL). Plain HTTP: geolocation, service worker and app install need HTTPS and stay off.
 # The Mac's IP must be in ALLOWED_HOSTS and CSRF_TRUSTED_ORIGINS (.env).
 lan:
 	@npm --prefix frontend run build --silent >/dev/null
 	@IP=$$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "<Mac IP>"); \
-	grep -Eq "^ALLOWED_HOSTS=.*$$IP" .env || echo "Warning: add $$IP to ALLOWED_HOSTS and http://$$IP:8000 to CSRF_TRUSTED_ORIGINS in .env."; \
-	echo; echo "  On a device of the same network: http://$$IP:8000"; echo; \
-	cd backend && DJANGO_VITE_DEV_MODE=False exec .venv/bin/python manage.py runserver 0.0.0.0:8000
+	grep -Eq "^ALLOWED_HOSTS=.*$$IP" .env || echo "Warning: add $$IP to ALLOWED_HOSTS and http://$$IP:$(DJANGO_PORT) to CSRF_TRUSTED_ORIGINS in .env."; \
+	echo; echo "  On a device of the same network: http://$$IP:$(DJANGO_PORT)"; echo; \
+	cd backend && DJANGO_VITE_DEV_MODE=False exec .venv/bin/python manage.py runserver 0.0.0.0:$(DJANGO_PORT)
 

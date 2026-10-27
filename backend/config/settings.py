@@ -13,7 +13,7 @@ ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
 # Base URL of the Vue app, used to build invitation links.
-FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:8000")
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:8080")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -105,7 +105,7 @@ DJANGO_VITE = {
     "default": {
         "dev_mode": env.bool("DJANGO_VITE_DEV_MODE", default=DEBUG),
         "dev_server_host": env("DJANGO_VITE_DEV_SERVER_HOST", default="localhost"),
-        "dev_server_port": env.int("DJANGO_VITE_DEV_SERVER_PORT", default=5173),
+        "dev_server_port": env.int("DJANGO_VITE_DEV_SERVER_PORT", default=5174),
     }
 }
 # Built mode does not use django-vite (no Vite manifest): silence its "manifest missing" check.
