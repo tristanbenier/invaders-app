@@ -25,6 +25,27 @@ const TILE_ATTRIBUTION =
   import.meta.env.VITE_MAP_TILE_ATTRIBUTION ||
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 const DEFAULT_VIEW = { center: [48.8566, 2.3522] as L.LatLngTuple, zoom: 13 }
+// Last map view, restored on reload (per browser, nothing to sync).
+const VIEW_STORAGE_KEY = 'invaders.mapView'
+
+function savedView(): { center: L.LatLngTuple; zoom: number } | null {
+  try {
+    const view = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) ?? 'null')
+    if (view && [view.lat, view.lng, view.zoom].every(Number.isFinite)) return { center: [view.lat, view.lng], zoom: view.zoom }
+  } catch {
+    // Storage blocked or corrupted value: use the default view.
+  }
+  return null
+}
+
+function saveView(instance: L.Map) {
+  const { lat, lng } = instance.getCenter()
+  try {
+    localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify({ lat, lng, zoom: instance.getZoom() }))
+  } catch {
+    // Storage unavailable (private mode): the view is simply not remembered.
+  }
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -202,7 +223,11 @@ provide(MAP_CONTEXT, {
 })
 
 onMounted(() => {
-  const instance = L.map(mapElement.value!, { zoomControl: false, maxZoom: 19, ...DEFAULT_VIEW })
+  const restored = savedView()
+  // A remembered view wins over the first geolocation fix (the locate button still recenters).
+  centeredOnUser = restored !== null
+  const instance = L.map(mapElement.value!, { zoomControl: false, maxZoom: 19, ...(restored ?? DEFAULT_VIEW) })
+  instance.on('moveend', () => saveView(instance))
   L.tileLayer(TILE_URL, {
     attribution: TILE_ATTRIBUTION,
     maxZoom: 19,
