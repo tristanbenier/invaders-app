@@ -18,10 +18,17 @@ const showNav = computed(() => !route.meta.public && route.name !== undefined)
 </template>
 
 <style scoped>
+/* Pinned to the visible screen: mobile browsers keep fixed elements above their toolbars, while
+   a document taller than the screen would push the bottom nav out of view. */
 .app {
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+}
+
+.app > :deep(.nav) {
+  flex-shrink: 0;
 }
 
 .app__main {

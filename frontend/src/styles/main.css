@@ -29,6 +29,15 @@
   box-sizing: border-box;
 }
 
+/* Only the app's own panels scroll, never the page: on mobile, scrolling the page would slide
+   the bottom nav away and fight with map gestures. */
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 body {
   margin: 0;
   background: var(--bg);
