@@ -85,3 +85,15 @@ export const geocodeApi = {
   search: (q: string, near?: { lat: number; lng: number }) =>
     api<PlaceResult[]>('/geocode/search/', { query: { q, lat: near?.lat, lng: near?.lng } }),
 }
+
+export interface IssPosition {
+  lat: number
+  lng: number
+  altitude_km: number
+  velocity_kmh: number
+  timestamp: number
+}
+
+export const issApi = {
+  position: () => api<IssPosition>('/iss/'),
+}

@@ -12,6 +12,7 @@ urlpatterns = [
     path("flashes/", views.MyFlashListView.as_view(), name="my-flashes"),
     path("geocode/reverse/", views.ReverseGeocodeView.as_view(), name="geocode-reverse"),
     path("geocode/search/", views.AddressSearchView.as_view(), name="geocode-search"),
+    path("iss/", views.IssPositionView.as_view(), name="iss-position"),
     path("stats/me/", stats.MyStatsView.as_view(), name="stats-me"),
     path("stats/team/", stats.TeamStatsView.as_view(), name="stats-team"),
     path("import/preview/", views.ImportView.as_view(commit=False), name="import-preview"),

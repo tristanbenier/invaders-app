@@ -13,6 +13,7 @@ import { directionsTo } from '@/composables/directions'
 import { formatDate, today } from '@/composables/format'
 import { useOptionalMapContext } from '@/composables/mapContext'
 import { useFormErrors } from '@/composables/useFormErrors'
+import { isIssInvader, useIssPosition } from '@/composables/useIssPosition'
 import { useAuthStore } from '@/stores/auth'
 import { useInvadersStore } from '@/stores/invaders'
 import { usePlacesStore } from '@/stores/places'
@@ -41,7 +42,11 @@ const address = computed(() => {
   // Only show the locality when there is an actual street address or zip code.
   return [address1, address2, address1 || address2 || zip ? locality : ''].filter(Boolean)
 })
-const directions = computed(() => (invader.value ? directionsTo(invader.value) : null))
+// SPACE2ISS is on the ISS: live position instead of a fixed spot, no directions, no move.
+const onIss = computed(() => invader.value !== null && isIssInvader(invader.value))
+const iss = useIssPosition(onIss)
+const directions = computed(() => (invader.value && !onIss.value ? directionsTo(invader.value) : null))
+let focusedOnIss = false
 
 async function load(id: number) {
   invader.value = null
@@ -50,11 +55,22 @@ async function load(id: number) {
   try {
     invader.value = await invadersApi.get(id)
     flashDate.value = invader.value.my_flashed_at ?? today()
-    mapContext?.focus(invader.value)
+    focusedOnIss = false
+    if (onIss.value) focusIss()
+    else mapContext?.focus(invader.value)
   } catch (error) {
     loadError.value = error instanceof Error ? error.message : String(error)
   }
 }
+
+/** Center the map on the ISS once its live position is known (zoomed out: it is over the planet). */
+function focusIss() {
+  if (focusedOnIss || !iss.position.value) return
+  focusedOnIss = true
+  mapContext?.focus(iss.position.value, 4)
+}
+
+watch(iss.position, () => onIss.value && focusIss())
 
 watch(
   () => Number(route.params.id),
@@ -127,7 +143,16 @@ async function remove() {
             <span class="status" :class="`status--${invader.status}`">{{ STATUS_LABELS[invader.status] }}</span>
           </dd>
         </div>
-        <div>
+        <div v-if="onIss" class="detail__wide">
+          <dt>Position en temps réel</dt>
+          <dd v-if="iss.position.value" class="detail__coords">
+            {{ iss.position.value.lat.toFixed(2) }}, {{ iss.position.value.lng.toFixed(2) }} ·
+            {{ iss.position.value.altitude_km }} km d'altitude ·
+            {{ iss.position.value.velocity_kmh.toLocaleString('fr-FR') }} km/h
+          </dd>
+          <dd v-else class="muted">{{ iss.error.value ?? 'Recherche de la station spatiale…' }}</dd>
+        </div>
+        <div v-else>
           <dt>Coordonnées</dt>
           <dd class="detail__coords">{{ invader.lat.toFixed(5) }}, {{ invader.lng.toFixed(5) }}</dd>
         </div>
@@ -197,7 +222,7 @@ async function remove() {
         <RouterLink :to="{ name: 'invader-edit', params: { id: invader.id } }" class="btn">
           <AppIcon name="edit" :size="18" /> Modifier
         </RouterLink>
-        <button v-if="mapContext" type="button" class="btn" :disabled="busy" @click="move">
+        <button v-if="mapContext && !onIss" type="button" class="btn" :disabled="busy" @click="move">
           <AppIcon name="move" :size="18" /> Déplacer
         </button>
         <button v-if="auth.isAdmin" type="button" class="btn btn--danger" :disabled="busy" @click="remove">

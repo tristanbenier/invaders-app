@@ -191,6 +191,8 @@ REST_FRAMEWORK = {
         "user": "600/min",
         "auth": "10/min",
         "geocode": "30/min",
+        # The map polls the ISS position every 5 s (12/min) while it is open.
+        "iss": "30/min",
         "import": "20/hour",
         "invitations": "30/hour",
     },

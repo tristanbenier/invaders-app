@@ -5,9 +5,17 @@ PREFIX_PATTERN = re.compile(r"^[A-Z]+$")
 # Loose user input such as "pa 123", "pa123", "PA-123" or "pa_0123".
 SEARCH_PATTERN = re.compile(r"^(?P<prefix>[A-Z]+)[\s_-]*(?P<number>\d+)$")
 
+# The invader sent to the International Space Station: its official name has no PREFIX_NUMBER
+# form. It belongs to the "SPACE" city and follows the ISS live position on the map.
+ISS_INVADER_NAME = "SPACE2ISS"
+# Names outside the PREFIX_NUMBER form: name -> (city prefix, number).
+SPECIAL_NAMES = {ISS_INVADER_NAME: ("SPACE", 2)}
+
 
 def parse_name(name):
-    """Return (prefix, number) for a name like "PA_123", or None if invalid."""
+    """Return (prefix, number) for a name like "PA_123" (or a special name), or None if invalid."""
+    if name in SPECIAL_NAMES:
+        return SPECIAL_NAMES[name]
     match = NAME_PATTERN.match(name)
     if match is None:
         return None

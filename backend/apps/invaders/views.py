@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsTeamAdmin, IsTeamMember
 from config import ratelimit
 
-from . import geocoding, history, importer, tiles
+from . import geocoding, history, importer, iss, tiles
 from .models import City, Country, Flash, HistoryAction, Invader, InvaderHistory, Status
 from .naming import search_terms
 from .serializers import (
@@ -210,6 +210,20 @@ class ReverseGeocodeView(APIView):
         except geocoding.GeocodingError:
             return Response(
                 {"detail": "Impossible de trouver l'adresse pour le moment."}, status=status.HTTP_502_BAD_GATEWAY
+            )
+
+
+class IssPositionView(APIView):
+    """Live position of the ISS, which carries the SPACE2ISS invader (polled by the map)."""
+
+    throttle_scope = "iss"
+
+    def get(self, request):
+        try:
+            return Response(iss.position())
+        except iss.IssError:
+            return Response(
+                {"detail": "Position de l'ISS indisponible pour le moment."}, status=status.HTTP_502_BAD_GATEWAY
             )
 
 

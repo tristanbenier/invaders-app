@@ -13,6 +13,7 @@ import FilterPanel from '@/components/FilterPanel.vue'
 import SearchBox from '@/components/SearchBox.vue'
 import { type LatLng, MAP_CONTEXT } from '@/composables/mapContext'
 import { useGeolocation } from '@/composables/useGeolocation'
+import { isIssInvader, useIssPosition } from '@/composables/useIssPosition'
 import { useAuthStore } from '@/stores/auth'
 import { useFiltersStore } from '@/stores/filters'
 import { useInvadersStore } from '@/stores/invaders'
@@ -68,6 +69,10 @@ let accuracyCircle: L.Circle | undefined
 let centeredOnUser = false
 let toastTimer: ReturnType<typeof setTimeout> | undefined
 let placeMarker: L.Marker | undefined
+// SPACE2ISS follows the ISS: kept out of the clusters, which cannot move a marker.
+let issMarker: L.Marker | undefined
+const issInvader = computed(() => invaders.items.find(isIssInvader))
+const iss = useIssPosition(computed(() => issInvader.value !== undefined))
 
 const sheetOpen = computed(() => route.name !== 'map')
 const mapTheme = computed(() => auth.me?.map_theme ?? 'light')
@@ -91,9 +96,9 @@ function markerState(invader: Invader) {
   return invader.my_flashed_at ? 'flashed' : 'not-flashed'
 }
 
-function invaderIcon(invader: Invader) {
+function invaderIcon(invader: Invader, extraClass = '') {
   return L.divIcon({
-    className: `pin pin--${markerState(invader)}`,
+    className: `pin pin--${markerState(invader)} ${extraClass}`.trim(),
     html: '<span class="pin__invader"></span>',
     iconSize: [30, 30],
     iconAnchor: [15, 15],
@@ -103,13 +108,33 @@ function invaderIcon(invader: Invader) {
 function renderMarkers() {
   clusters.clearLayers()
   clusters.addLayers(
-    invaders.items.map((invader) =>
-      L.marker([invader.lat, invader.lng], { icon: invaderIcon(invader), title: invader.name, keyboard: true }).on(
-        'click',
-        () => router.push({ name: 'invader', params: { id: invader.id } }),
+    invaders.items
+      .filter((invader) => !isIssInvader(invader))
+      .map((invader) =>
+        L.marker([invader.lat, invader.lng], { icon: invaderIcon(invader), title: invader.name, keyboard: true }).on(
+          'click',
+          () => router.push({ name: 'invader', params: { id: invader.id } }),
+        ),
       ),
-    ),
   )
+  renderIss()
+}
+
+/** SPACE2ISS at the live ISS position (its stored position until the first answer). */
+function renderIss() {
+  issMarker?.remove()
+  issMarker = undefined
+  const invader = issInvader.value
+  if (!map.value || !invader) return
+  const point = iss.position.value ?? invader
+  issMarker = L.marker([point.lat, point.lng], {
+    icon: invaderIcon(invader, 'pin--iss'),
+    title: `${invader.name} — Station spatiale internationale`,
+    keyboard: true,
+    zIndexOffset: 1000,
+  })
+    .on('click', () => router.push({ name: 'invader', params: { id: invader.id } }))
+    .addTo(map.value)
 }
 
 function renderUserPosition() {
@@ -257,11 +282,13 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (picking.value) confirmPicking(false)
+  issMarker?.remove()
   map.value?.remove()
   clearTimeout(toastTimer)
 })
 
 watch(() => invaders.items, renderMarkers)
+watch(iss.position, (point) => point && issMarker?.setLatLng([point.lat, point.lng]))
 watch(geo.position, renderUserPosition)
 watch(
   () => invaders.error,
@@ -530,6 +557,17 @@ watch(
 @keyframes pin-pulse {
   50% {
     box-shadow: 0 0 0 8px rgb(255 199 95 / 0.25);
+  }
+}
+
+/* SPACE2ISS, moving with the ISS: a halo tells it apart from fixed invaders. */
+.pin--iss {
+  animation: pin-orbit 2.5s ease-in-out infinite;
+}
+
+@keyframes pin-orbit {
+  50% {
+    box-shadow: 0 0 0 8px rgb(90 170 255 / 0.35);
   }
 }
 
