@@ -97,6 +97,30 @@ const logout = () =>
     <FieldErrors :messages="[...(errors._ ?? []), ...(errors.email ?? [])]" />
 
     <section class="card team__section">
+      <h2>Membres ({{ teamStore.team?.members.length ?? 0 }})</h2>
+      <ul class="team__list">
+        <li v-for="member in teamStore.team?.members ?? []" :key="member.id">
+          <div class="team__item-text">
+            <span>{{ member.display_name }}<template v-if="member.id === auth.me?.id"> (vous)</template></span>
+            <small class="muted">
+              {{ member.role === 'admin' ? 'Administrateur' : 'Membre' }} · depuis le {{ formatDate(member.date_joined) }}
+            </small>
+          </div>
+          <button
+            v-if="auth.isAdmin && member.id !== auth.me?.id"
+            type="button"
+            class="btn btn--icon btn--danger"
+            :aria-label="`Retirer ${member.display_name}`"
+            :disabled="busy"
+            @click="removeMember(member)"
+          >
+            <AppIcon name="trash" :size="18" />
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <section class="card team__section">
       <h2>Inviter un membre</h2>
       <p class="muted">Le lien est valable 7 jours et ne sert qu'une fois. L'email est facultatif : s'il est indiqué, seule cette adresse pourra l'utiliser.</p>
       <form class="team__invite" @submit.prevent="invite">
@@ -120,30 +144,6 @@ const logout = () =>
             aria-label="Révoquer l'invitation"
             :disabled="busy"
             @click="revoke(invitation)"
-          >
-            <AppIcon name="trash" :size="18" />
-          </button>
-        </li>
-      </ul>
-    </section>
-
-    <section class="card team__section">
-      <h2>Membres ({{ teamStore.team?.members.length ?? 0 }})</h2>
-      <ul class="team__list">
-        <li v-for="member in teamStore.team?.members ?? []" :key="member.id">
-          <div class="team__item-text">
-            <span>{{ member.display_name }}<template v-if="member.id === auth.me?.id"> (vous)</template></span>
-            <small class="muted">
-              {{ member.role === 'admin' ? 'Administrateur' : 'Membre' }} · depuis le {{ formatDate(member.date_joined) }}
-            </small>
-          </div>
-          <button
-            v-if="auth.isAdmin && member.id !== auth.me?.id"
-            type="button"
-            class="btn btn--icon btn--danger"
-            :aria-label="`Retirer ${member.display_name}`"
-            :disabled="busy"
-            @click="removeMember(member)"
           >
             <AppIcon name="trash" :size="18" />
           </button>

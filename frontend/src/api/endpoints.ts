@@ -20,6 +20,7 @@ export interface InvaderFilters {
   city?: number | null
   country?: number | null
   status?: string
+  points?: string
   flashed?: 'true' | 'false'
   flashed_by?: number | null
   not_flashed_by?: number | null
@@ -49,6 +50,8 @@ export const placesApi = {
   cities: () => api<City[]>('/cities/'),
   createCity: (body: { name: string; prefix: string; country?: number; country_name?: string }) =>
     api<City>('/cities/', { method: 'POST', body }),
+  updateCity: (id: number, body: { country?: number; country_name?: string }) =>
+    api<City>(`/cities/${id}/`, { method: 'PATCH', body }),
 }
 
 export const invadersApi = {

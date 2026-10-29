@@ -56,7 +56,8 @@ class MyStatsView(APIView):
                 }
                 for city in cities
             ),
-            key=lambda row: (-row["flashed"] / row["total"], -row["total"], row["city"]["name"]),
+            # Most flashed invaders first; ties by completion rate, then name.
+            key=lambda row: (-row["flashed"], -row["flashed"] / row["total"], row["city"]["name"]),
         )
 
         return Response(

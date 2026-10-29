@@ -9,6 +9,7 @@ export const useFiltersStore = defineStore('filters', () => {
   const state = reactive({
     flashed: 'all' as 'all' | 'yes' | 'no',
     statuses: [] as Status[],
+    points: [] as number[],
     city: null as number | null,
     country: null as number | null,
     flashedBy: null as number | null,
@@ -18,6 +19,7 @@ export const useFiltersStore = defineStore('filters', () => {
   const query = computed<InvaderFilters>(() => ({
     flashed: state.flashed === 'all' ? undefined : state.flashed === 'yes' ? 'true' : 'false',
     status: state.statuses.join(','),
+    points: state.points.join(','),
     city: state.city,
     country: state.country,
     flashed_by: state.flashedBy,
@@ -26,13 +28,27 @@ export const useFiltersStore = defineStore('filters', () => {
 
   const activeCount = computed(
     () =>
-      [state.flashed !== 'all', state.statuses.length > 0, state.city, state.country, state.flashedBy, state.notFlashedBy].filter(
-        Boolean,
-      ).length,
+      [
+        state.flashed !== 'all',
+        state.statuses.length > 0,
+        state.points.length > 0,
+        state.city,
+        state.country,
+        state.flashedBy,
+        state.notFlashedBy,
+      ].filter(Boolean).length,
   )
 
   function reset() {
-    Object.assign(state, { flashed: 'all', statuses: [], city: null, country: null, flashedBy: null, notFlashedBy: null })
+    Object.assign(state, {
+      flashed: 'all',
+      statuses: [],
+      points: [],
+      city: null,
+      country: null,
+      flashedBy: null,
+      notFlashedBy: null,
+    })
   }
 
   return { state, query, activeCount, reset }

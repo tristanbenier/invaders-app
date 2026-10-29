@@ -11,6 +11,8 @@ const places = usePlacesStore()
 const team = useTeamStore()
 
 const statuses = Object.entries(STATUS_LABELS) as [Status, string][]
+// Point values used by Invader.
+const POINT_VALUES = [10, 20, 30, 40, 50, 100]
 const members = computed(() => team.team?.members ?? [])
 const cities = computed(() =>
   places.cities.filter((city) => filters.state.country === null || city.country === filters.state.country),
@@ -19,6 +21,11 @@ const cities = computed(() =>
 function toggleStatus(status: Status) {
   const current = filters.state.statuses
   filters.state.statuses = current.includes(status) ? current.filter((s) => s !== status) : [...current, status]
+}
+
+function togglePoints(value: number) {
+  const current = filters.state.points
+  filters.state.points = current.includes(value) ? current.filter((p) => p !== value) : [...current, value]
 }
 
 function onCountryChange() {
@@ -59,6 +66,23 @@ function onCountryChange() {
           @click="toggleStatus(value)"
         >
           {{ label }}
+        </button>
+      </div>
+    </fieldset>
+
+    <fieldset class="filters__group">
+      <legend>Points</legend>
+      <div class="chips">
+        <button
+          v-for="value in POINT_VALUES"
+          :key="value"
+          type="button"
+          class="chip"
+          :class="{ 'chip--active': filters.state.points.includes(value) }"
+          :aria-pressed="filters.state.points.includes(value)"
+          @click="togglePoints(value)"
+        >
+          {{ value }}
         </button>
       </div>
     </fieldset>

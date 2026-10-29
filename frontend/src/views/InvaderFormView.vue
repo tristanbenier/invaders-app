@@ -15,6 +15,8 @@ import { useInvadersStore } from '@/stores/invaders'
 import { usePlacesStore } from '@/stores/places'
 
 const NAME_PATTERN = /^([A-Z]+)_\d+$/
+// Names outside the PREFIX_NUMBER form, with their city prefix (backend: naming.SPECIAL_NAMES).
+const SPECIAL_NAMES: Record<string, string> = { SPACE2ISS: 'SPACE' }
 const POINT_PRESETS = [10, 20, 30, 40, 50, 100]
 const NEW_COUNTRY = -1
 
@@ -54,9 +56,24 @@ const pointOptions = computed(() =>
     : POINT_PRESETS,
 )
 const normalizedName = computed(() => form.name.trim().toUpperCase())
-const prefix = computed(() => NAME_PATTERN.exec(normalizedName.value)?.[1] ?? null)
+const prefix = computed(
+  () => SPECIAL_NAMES[normalizedName.value] ?? NAME_PATTERN.exec(normalizedName.value)?.[1] ?? null,
+)
 const matchedCity = computed(() => (prefix.value ? places.cityByPrefix.get(prefix.value) : undefined))
 const needsCity = computed(() => prefix.value !== null && !matchedCity.value)
+// The country belongs to the city: changing it here moves every invader of that city.
+const cityCountry = reactive({ id: null as number | null, newName: '' })
+const countryChanged = computed(
+  () => matchedCity.value !== undefined && cityCountry.id !== null && cityCountry.id !== matchedCity.value.country,
+)
+watch(
+  matchedCity,
+  (city) => {
+    cityCountry.id = city?.country ?? null
+    cityCountry.newName = ''
+  },
+  { immediate: true },
+)
 const imagePreview = computed(() =>
   imageFile.value ? URL.createObjectURL(imageFile.value) : removeImage.value ? null : currentImage.value,
 )
@@ -183,6 +200,22 @@ async function createMissingCity() {
   }
 }
 
+async function updateCityCountry() {
+  const city = matchedCity.value
+  if (!city || !countryChanged.value) return
+  const newCountry = cityCountry.id === NEW_COUNTRY
+  try {
+    await places.updateCity(
+      city.id,
+      newCountry ? { country_name: cityCountry.newName.trim() } : { country: cityCountry.id! },
+    )
+  } catch (error) {
+    capture(error)
+    errors.value = Object.fromEntries(Object.entries(errors.value).map(([key, value]) => [`city_${key}`, value]))
+    throw error
+  }
+}
+
 function payload(): FormData | Partial<Invader> {
   const fields = {
     name: normalizedName.value,
@@ -209,6 +242,7 @@ async function submit() {
   submitting.value = true
   try {
     await createMissingCity()
+    await updateCityCountry()
     const body = payload()
     let saved: Invader
     if (editedId.value) {
@@ -256,6 +290,26 @@ function close() {
         <small v-if="matchedCity" class="muted">Ville : {{ matchedCity.name }}</small>
         <FieldErrors :messages="errors.name" />
       </label>
+
+      <template v-if="matchedCity">
+        <label class="field">
+          <span>Pays</span>
+          <select v-model="cityCountry.id" class="input">
+            <option v-for="country in places.countries" :key="country.id" :value="country.id">{{ country.name }}</option>
+            <option :value="NEW_COUNTRY">+ Nouveau pays</option>
+          </select>
+          <small v-if="countryChanged" class="muted">
+            S'applique à toute la ville {{ matchedCity.name }} et à tous ses invaders.
+          </small>
+        </label>
+        <label v-if="cityCountry.id === NEW_COUNTRY" class="field">
+          <span>Nom du nouveau pays</span>
+          <input v-model="cityCountry.newName" class="input" required />
+        </label>
+        <FieldErrors
+          :messages="[...(errors.city_country ?? []), ...(errors.city_country_name ?? []), ...(errors.city__ ?? [])]"
+        />
+      </template>
 
       <fieldset v-if="needsCity" class="form__city card">
         <legend>Nouvelle ville pour le préfixe {{ prefix }}</legend>

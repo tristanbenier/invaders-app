@@ -167,14 +167,14 @@ function state(invader: Invader) {
             <InvaderPhoto v-if="invader.image" :src="invader.image" :alt="`Photo de ${invader.name}`" lazy class="tile__photo" />
             <span v-else class="tile__placeholder" aria-hidden="true" />
             <span v-if="invader.my_flashed_at" class="tile__badge">
-              <AppIcon name="check" :size="14" /> Flashé
+              <AppIcon name="check" :size="14" /> <span class="tile__badge-label">Flashé</span>
             </span>
             <span v-else-if="invader.status === 'destroyed'" class="tile__badge tile__badge--muted">
               {{ STATUS_LABELS.destroyed }}
             </span>
           </div>
           <div class="tile__text">
-            <strong>{{ invader.name }}</strong>
+            <strong class="tile__name">{{ invader.name }}</strong>
             <span class="muted">{{ places.cityById.get(invader.city)?.name ?? '' }}</span>
           </div>
           <span class="tile__points">{{ invader.points }} pts</span>
@@ -318,11 +318,15 @@ function state(invader: Invader) {
   min-width: 0;
 }
 
+.tile__name,
 .tile__text span {
-  font-size: 0.85rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tile__text span {
+  font-size: 0.85rem;
 }
 
 .tile__points {
@@ -333,6 +337,46 @@ function state(invader: Invader) {
 
 .gallery__empty {
   text-align: center;
+}
+
+/* Phones: 3 compact tiles per row, the "Flashé" badge shrinks to its check mark. */
+@media (max-width: 767px) {
+  .gallery__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .tile {
+    border-radius: 10px;
+  }
+
+  .tile__badge {
+    top: 4px;
+    left: 4px;
+    padding: 2px 6px;
+    font-size: 0.65rem;
+  }
+
+  .tile__badge-label {
+    display: none;
+  }
+
+  .tile__text {
+    padding: 6px 6px 0;
+  }
+
+  .tile__name {
+    font-size: 0.8rem;
+  }
+
+  .tile__text span,
+  .tile__points {
+    font-size: 0.7rem;
+  }
+
+  .tile__points {
+    padding: 0 6px 6px;
+  }
 }
 
 .gallery__sentinel {

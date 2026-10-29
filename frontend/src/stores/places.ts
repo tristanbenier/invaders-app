@@ -31,5 +31,12 @@ export const usePlacesStore = defineStore('places', () => {
     return city
   }
 
-  return { cities, countries, cityById, cityByPrefix, load, createCity }
+  async function updateCity(id: number, payload: Parameters<typeof placesApi.updateCity>[1]) {
+    const city = await placesApi.updateCity(id, payload)
+    // The country may have been created on the fly.
+    await load(true)
+    return city
+  }
+
+  return { cities, countries, cityById, cityByPrefix, load, createCity, updateCity }
 })

@@ -9,7 +9,6 @@ import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
 const numberFormat = new Intl.NumberFormat('fr-FR')
-const percentFormat = new Intl.NumberFormat('fr-FR', { style: 'percent', maximumFractionDigits: 0 })
 
 const mine = ref<MyStats | null>(null)
 const team = ref<TeamStats | null>(null)
@@ -23,6 +22,9 @@ onMounted(async () => {
     error.value = e instanceof Error ? e.message : String(e)
   }
 })
+
+// A full city bar means 30 flashes (more stays full).
+const CITY_BAR_FLASHES = 30
 
 const myRank = computed(() => {
   const index = team.value?.ranking.findIndex((row) => row.user.id === auth.me?.id) ?? -1
@@ -92,25 +94,25 @@ const myRank = computed(() => {
       </section>
 
       <section class="card stats__section">
-        <h2>Complétion par ville</h2>
+        <h2>Flashs par ville</h2>
         <p v-if="!mine.by_city.length" class="muted">Aucune ville pour l'instant.</p>
         <ul v-else class="stats__cities">
           <li v-for="row in mine.by_city" :key="row.city.id">
             <div class="stats__city-text">
               <span>{{ row.city.name }} <small class="muted">{{ row.country }}</small></span>
               <span class="stats__num">
-                {{ row.flashed }} / {{ row.total }} · {{ percentFormat.format(row.flashed / row.total) }}
+                {{ row.flashed }} flash{{ row.flashed > 1 ? 's' : '' }} <small class="muted">/ {{ row.total }}</small>
               </span>
             </div>
             <div
               class="stats__meter"
               role="meter"
-              :aria-valuenow="row.flashed"
+              :aria-valuenow="Math.min(row.flashed, CITY_BAR_FLASHES)"
               aria-valuemin="0"
-              :aria-valuemax="row.total"
-              :aria-label="`Complétion à ${row.city.name}`"
+              :aria-valuemax="CITY_BAR_FLASHES"
+              :aria-label="`Flashs à ${row.city.name}`"
             >
-              <span class="stats__meter-fill" :style="{ width: `${(row.flashed / row.total) * 100}%` }" />
+              <span class="stats__meter-fill" :style="{ width: `${Math.min(row.flashed / CITY_BAR_FLASHES, 1) * 100}%` }" />
             </div>
           </li>
         </ul>

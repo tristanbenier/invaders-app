@@ -150,6 +150,12 @@ class InvaderViewSet(TeamScopedViewSet):
             if invalid := set(statuses) - set(Status.values):
                 raise ValidationError({"status": f"Statut inconnu : {', '.join(sorted(invalid))}."})
             queryset = queryset.filter(status__in=statuses)
+        if points := params.get("points"):
+            try:
+                values = [int(value) for value in points.split(",") if value]
+            except ValueError:
+                raise ValidationError({"points": "Les points doivent être des nombres séparés par des virgules."})
+            queryset = queryset.filter(points__in=values)
 
         flashed = params.get("flashed")
         if flashed in ("true", "false"):
