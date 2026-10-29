@@ -47,6 +47,12 @@ const onIss = computed(() => invader.value !== null && isIssInvader(invader.valu
 const iss = useIssPosition(onIss)
 const directions = computed(() => (invader.value && !onIss.value ? directionsTo(invader.value) : null))
 let focusedOnIss = false
+// Other people's photos of this invader, to identify it or check its state.
+const googleImagesUrl = computed(() =>
+  invader.value
+    ? `https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`invader ${invader.value.name}`)}`
+    : null,
+)
 
 async function load(id: number) {
   invader.value = null
@@ -199,35 +205,43 @@ async function remove() {
         </ul>
       </section>
 
-      <a
-        v-if="directions"
-        :href="directions.url"
-        target="_blank"
-        rel="noopener"
-        class="btn btn--block"
-        :title="directions.app === 'apple' ? 'Ouvrir dans Plans' : 'Ouvrir dans Google Maps'"
-      >
-        <AppIcon name="route" :size="18" /> Itinéraire
-      </a>
+      <!-- One block: the button rows keep the same 8px spacing between them. -->
+      <div class="detail__buttons">
+        <div class="detail__links">
+          <a
+            v-if="directions"
+            :href="directions.url"
+            target="_blank"
+            rel="noopener"
+            class="btn"
+            :title="directions.app === 'apple' ? 'Ouvrir dans Plans' : 'Ouvrir dans Google Maps'"
+          >
+            <AppIcon name="route" :size="18" /> Itinéraire
+          </a>
+          <a v-if="googleImagesUrl" :href="googleImagesUrl" target="_blank" rel="noopener" class="btn" title="Rechercher dans Google Images">
+            <AppIcon name="search" :size="18" /> Google
+          </a>
+        </div>
 
-      <RouterLink
-        v-if="!mapContext"
-        :to="{ name: 'invader', params: { id: invader.id } }"
-        class="btn btn--primary btn--block"
-      >
-        <AppIcon name="map" :size="18" /> Voir sur la carte
-      </RouterLink>
-
-      <div class="detail__actions">
-        <RouterLink :to="{ name: 'invader-edit', params: { id: invader.id } }" class="btn">
-          <AppIcon name="edit" :size="18" /> Modifier
+        <RouterLink
+          v-if="!mapContext"
+          :to="{ name: 'invader', params: { id: invader.id } }"
+          class="btn btn--primary btn--block"
+        >
+          <AppIcon name="map" :size="18" /> Voir sur la carte
         </RouterLink>
-        <button v-if="mapContext && !onIss" type="button" class="btn" :disabled="busy" @click="move">
-          <AppIcon name="move" :size="18" /> Déplacer
-        </button>
-        <button v-if="auth.isAdmin" type="button" class="btn btn--danger" :disabled="busy" @click="remove">
-          <AppIcon name="trash" :size="18" /> Supprimer
-        </button>
+
+        <div class="detail__actions">
+          <RouterLink :to="{ name: 'invader-edit', params: { id: invader.id } }" class="btn">
+            <AppIcon name="edit" :size="18" /> Modifier
+          </RouterLink>
+          <button v-if="mapContext && !onIss" type="button" class="btn" :disabled="busy" @click="move">
+            <AppIcon name="move" :size="18" /> Déplacer
+          </button>
+          <button v-if="auth.isAdmin" type="button" class="btn btn--danger" :disabled="busy" @click="remove">
+            <AppIcon name="trash" :size="18" /> Supprimer
+          </button>
+        </div>
       </div>
 
       <InvaderHistory :invader-id="invader.id" :updated-at="invader.updated_at" :lat="invader.lat" :lng="invader.lng" />
@@ -340,6 +354,20 @@ async function remove() {
   justify-content: space-between;
   padding: 6px 0;
   border-bottom: 1px solid var(--border);
+}
+
+.detail__buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Itinéraire and Google side by side, sharing the width (Google alone for SPACE2ISS). */
+.detail__links {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 8px;
 }
 
 .detail__actions {
