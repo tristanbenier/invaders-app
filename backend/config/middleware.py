@@ -15,7 +15,8 @@ CONTENT_SECURITY_POLICY = "; ".join(
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: blob:",
         "connect-src 'self' blob:",
-        "worker-src 'self'",
+        # MapLibre (vector basemap) starts its web worker from a blob: URL.
+        "worker-src 'self' blob:",
         "manifest-src 'self'",
         "font-src 'self'",
         "frame-ancestors 'none'",

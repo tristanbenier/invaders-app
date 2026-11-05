@@ -1,7 +1,7 @@
 from django.db.models import Count, Exists, IntegerField, OuterRef, ProtectedError, Q, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.conf import settings
-from django.http import FileResponse, HttpResponse
+from django.http import HttpResponse
 from django.utils import timezone
 from django.views.decorators.http import require_GET
 from rest_framework import generics, status, viewsets
@@ -298,25 +298,25 @@ class ImportView(APIView):
 
 
 @require_GET
-def map_tile(request, z, x, y):
-    """OSM tile relayed through the server (see tiles.py). Members only: not an open proxy."""
+def map_tile(request, path):
+    """Basemap file (style, tile, font, sprite) relayed from OpenFreeMap or Americana (see tiles.py).
+
+    Members only, and only the paths a style needs: not an open proxy.
+    """
     user = request.user
     if not (user.is_authenticated and user.team_id):
         return HttpResponse(status=403)
     if not ratelimit.is_allowed(f"tiles:{user.pk}", settings.TILE_RATE_LIMIT_PER_MINUTE, 60):
         return ratelimit.too_many_requests()
-    if not tiles.is_valid(z, x, y):
+    if (resource := tiles.resolve(path)) is None:
         return HttpResponse(status=404)
     try:
-        try:
-            tile = tiles.get_tile(z, x, y).open("rb")
-        except FileNotFoundError:
-            # Deleted by a concurrent pruning pass between the check and the read.
-            tile = tiles.get_tile(z, x, y).open("rb")
+        data = tiles.get(path, resource)
     except tiles.TileError:
         return HttpResponse(status=502)
     tiles.maybe_prune_async()
-    response = FileResponse(tile, content_type="image/png")
-    # Let the browser keep tiles for a day instead of asking again on every reload.
+    data = tiles.adapt(path, data, resource, request.build_absolute_uri("/tiles/"))
+    response = HttpResponse(data, content_type=resource.content_type)
+    # Let the browser keep files for a day instead of asking again on every reload.
     response["Cache-Control"] = "private, max-age=86400"
     return response

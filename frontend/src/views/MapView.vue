@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import L from '@/lib/leaflet'
 import 'leaflet.markercluster'
+import '@maplibre/maplibre-gl-leaflet'
+import 'maplibre-gl/dist/maplibre-gl.css'
 
 import { computed, onBeforeUnmount, onMounted, provide, ref, shallowRef, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -20,11 +22,15 @@ import { useInvadersStore } from '@/stores/invaders'
 import { usePlacesStore } from '@/stores/places'
 import { useTeamStore } from '@/stores/team'
 
-// OSM tiles relayed (and cached) by Django: browsers like Brave strip the Referer OSM requires.
-const TILE_URL = import.meta.env.VITE_MAP_TILE_URL || '/tiles/{z}/{x}/{y}.png'
-const TILE_ATTRIBUTION =
-  import.meta.env.VITE_MAP_TILE_ATTRIBUTION ||
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+// Vector basemap drawn by MapLibre from OpenFreeMap's OpenStreetMap tiles, relayed and
+// cached by Django under /tiles/ (style, tiles, fonts and sprites: no third-party origin).
+// Our own "day" and "night" styles (backend basemap_styles.py). The attribution
+// (OpenFreeMap, OpenMapTiles, OpenStreetMap) comes from the tile set.
+const BASEMAP_STYLES = { light: 'day', dark: 'night' } as const
+
+function basemapStyle(theme: keyof typeof BASEMAP_STYLES) {
+  return new URL(`/tiles/styles/${BASEMAP_STYLES[theme]}`, window.location.origin).href
+}
 const DEFAULT_VIEW = { center: [48.8566, 2.3522] as L.LatLngTuple, zoom: 13 }
 // Last map view, restored on reload (per browser, nothing to sync).
 const VIEW_STORAGE_KEY = 'invaders.mapView'
@@ -64,6 +70,7 @@ const toast = ref<string | null>(null)
 const picking = ref<{ message: string; resolve: (point: LatLng | null) => void; marker: L.Marker } | null>(null)
 
 let clusters: L.MarkerClusterGroup
+let basemap: L.MaplibreGL | undefined
 let userMarker: L.CircleMarker | undefined
 let accuracyCircle: L.Circle | undefined
 let centeredOnUser = false
@@ -253,11 +260,7 @@ onMounted(() => {
   centeredOnUser = restored !== null
   const instance = L.map(mapElement.value!, { zoomControl: false, maxZoom: 19, ...(restored ?? DEFAULT_VIEW) })
   instance.on('moveend', () => saveView(instance))
-  L.tileLayer(TILE_URL, {
-    attribution: TILE_ATTRIBUTION,
-    maxZoom: 19,
-    className: 'map-tiles',
-  }).addTo(instance)
+  basemap = L.maplibreGL({ style: basemapStyle(mapTheme.value) }).addTo(instance)
   clusters = L.markerClusterGroup({
     chunkedLoading: true,
     showCoverageOnHover: false,
@@ -288,6 +291,7 @@ onBeforeUnmount(() => {
 })
 
 watch(() => invaders.items, renderMarkers)
+watch(mapTheme, (theme) => basemap?.getMaplibreMap().setStyle(basemapStyle(theme)))
 watch(iss.position, (point) => point && issMarker?.setLatLng([point.lat, point.lng]))
 watch(geo.position, renderUserPosition)
 watch(
@@ -506,17 +510,14 @@ watch(
 </style>
 
 <style>
-/* Standard OSM tiles, toned down (light) or inverted (dark). */
-.map-view--light .map-tiles {
-  filter: grayscale(0.85) brightness(1.04) contrast(0.92);
-}
-
-.map-view--dark .map-tiles {
-  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9) saturate(0.6);
-}
-
+/* Shown while the day style loads: its land color (basemap_styles.DAY). */
 .map-view--light .leaflet-container {
-  background: #f2f2f0;
+  background: #f5f6f7;
+}
+
+/* Shown while the night style loads: its land color (basemap_styles.LAND). */
+.map-view--dark .leaflet-container {
+  background: #1e2a3b;
 }
 
 /* Leaflet markers live outside the component scope. */

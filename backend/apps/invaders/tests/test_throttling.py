@@ -46,6 +46,6 @@ class TileThrottlingTests(ApiTestCase):
     def test_tiles_are_limited_per_member(self):
         browser = Client()
         browser.force_login(self.bob)
-        # Zoom 99 is invalid: answered with a 404 without calling OpenStreetMap.
+        # Not a basemap path: answered with a 404 without calling OpenFreeMap.
         codes = [browser.get("/tiles/99/0/0.png").status_code for _ in range(7)]
         self.assertEqual(codes, [404] * 5 + [429, 429])

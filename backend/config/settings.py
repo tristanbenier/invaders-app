@@ -210,7 +210,7 @@ INVITATION_VALIDITY_DAYS = 7
 # Sent to Nominatim for reverse geocoding; its usage policy requires an identifying value.
 GEOCODER_USER_AGENT = env("GEOCODER_USER_AGENT", default="Invaders/1.0 (team map for Space Invaders)")
 
-# Map tiles are relayed from OpenStreetMap (apps/invaders/tiles.py) and cached on disk.
+# The vector basemap is relayed from OpenFreeMap (apps/invaders/tiles.py) and cached on disk.
 TILE_USER_AGENT = env("TILE_USER_AGENT", default=GEOCODER_USER_AGENT)
 TILE_CACHE_DIR = Path(env("TILE_CACHE_DIR", default=str(BASE_DIR / "tile_cache")))
 # Cached tiles not refreshed for this many days are deleted automatically (once a day).

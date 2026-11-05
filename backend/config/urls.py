@@ -20,7 +20,7 @@ urlpatterns = [
     path("api/", include("apps.invaders.urls")),
     path("sw.js", service_worker, name="service-worker"),
     path("manifest.webmanifest", web_manifest, name="web-manifest"),
-    path("tiles/<int:z>/<int:x>/<int:y>.png", map_tile, name="map-tile"),
+    re_path(r"^tiles/(?P<path>.+)$", map_tile, name="map-tile"),
 ]
 
 # Uploaded photos (random, unguessable file names); served by Caddy when it is in front.

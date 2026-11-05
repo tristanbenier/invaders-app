@@ -56,8 +56,11 @@ export default defineConfig(({ mode }) => {
           inlineWorkboxRuntime: true,
           runtimeCaching: [
             {
-              // Map tiles (relayed by Django) rarely change: serve them from cache to save data.
-              urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.startsWith('/tiles/'),
+              // Basemap files relayed by Django (tiles, fonts, sprites) rarely change: serve them
+              // from cache to save data. Not the styles and TileJSON: they name the current
+              // weekly tile set, and a stale copy would keep asking for retired tiles.
+              urlPattern: ({ url, sameOrigin }) =>
+                sameOrigin && url.pathname.startsWith('/tiles/') && !/^\/tiles\/(styles\/|planet$)/.test(url.pathname),
               handler: 'CacheFirst',
               options: {
                 cacheName: 'map-tiles',
