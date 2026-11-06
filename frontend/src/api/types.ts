@@ -123,6 +123,12 @@ export interface CityProgress {
   flashed: number
 }
 
+export interface PointsProgress {
+  points: number
+  total: number
+  flashed: number
+}
+
 export interface TimelinePoint {
   date: string
   points: number
@@ -138,6 +144,7 @@ export interface MyStats {
   team_invaders: number
   timeline: TimelinePoint[]
   by_city: CityProgress[]
+  by_points: PointsProgress[]
 }
 
 export interface TeamStats {

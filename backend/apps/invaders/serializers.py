@@ -238,3 +238,4 @@ class InvaderHistorySerializer(serializers.ModelSerializer):
 class ImportOptionsSerializer(serializers.Serializer):
     file = serializers.FileField(required=False)
     mark_as_flashed = serializers.BooleanField(default=False)
+    skip_existing = serializers.BooleanField(default=False)

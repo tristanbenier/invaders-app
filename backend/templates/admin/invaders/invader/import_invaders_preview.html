@@ -1,7 +1,7 @@
 {% extends "admin/invaders/invader/_import_base.html" %}
 
 {% block content %}
-  <p>Équipe <strong>{{ team }}</strong>, auteur <strong>{{ author.display_name }}</strong>{% if mark_as_flashed %}, invaders marqués comme flashés par l'auteur{% endif %}.</p>
+  <p>Équipe <strong>{{ team }}</strong>, auteur <strong>{{ author.display_name }}</strong>{% if mark_as_flashed %}, invaders marqués comme flashés par l'auteur{% endif %}{% if skip_existing %}, invaders existants ignorés{% endif %}.</p>
 
   <div class="module">
     <h2>Résumé</h2>
@@ -10,6 +10,7 @@
         <tr><th>Invaders à créer</th><td>{{ summary.counts.to_create }}</td></tr>
         <tr><th>Invaders à mettre à jour</th><td>{{ summary.counts.to_update }}</td></tr>
         <tr><th>Invaders inchangés</th><td>{{ summary.counts.unchanged }}</td></tr>
+        {% if skip_existing %}<tr><th>Invaders existants ignorés</th><td>{{ summary.counts.skipped }}</td></tr>{% endif %}
         <tr><th>Villes à créer</th><td>{{ summary.counts.cities_to_create }}{% if summary.cities_to_create %} :
           {% for city in summary.cities_to_create %}{{ city.name }} ({{ city.prefix }}, {{ city.country }}){% if not forloop.last %}, {% endif %}{% endfor %}{% endif %}</td></tr>
         <tr><th>Pays à créer</th><td>{{ summary.countries_to_create|join:", "|default:"aucun" }}</td></tr>
@@ -53,6 +54,7 @@
       <input type="hidden" name="team" value="{{ team.pk }}">
       <input type="hidden" name="author" value="{{ author.pk }}">
       {% if mark_as_flashed %}<input type="hidden" name="mark_as_flashed" value="on">{% endif %}
+      {% if skip_existing %}<input type="hidden" name="skip_existing" value="on">{% endif %}
       <div class="submit-row">
         <input type="submit" class="default" value="Confirmer l'import">
         <a href="{% url 'admin:invaders_invader_import' %}" class="closelink">Annuler</a>

@@ -14,6 +14,7 @@ const mine = ref<MyStats | null>(null)
 const team = ref<TeamStats | null>(null)
 const error = ref<string | null>(null)
 const showTable = ref(false)
+const showAllCities = ref(false)
 
 onMounted(async () => {
   try {
@@ -25,6 +26,50 @@ onMounted(async () => {
 
 // A full city bar means 30 flashes (more stays full).
 const CITY_BAR_FLASHES = 30
+
+const BREAKDOWN_TABS = { city: 'Flashs par ville', points: 'Flashs par points' } as const
+const breakdown = ref<keyof typeof BREAKDOWN_TABS>('city')
+
+interface BreakdownRow {
+  key: number
+  label: string
+  detail: string
+  flashed: number
+  total: number
+  // Number of flashes that fills the bar.
+  scale: number
+}
+
+// Cities without any flash of mine stay hidden until "Voir plus".
+const visibleCities = computed(() => {
+  const rows = mine.value?.by_city ?? []
+  return showAllCities.value ? rows : rows.filter((row) => row.flashed > 0)
+})
+
+// Point values are few: all shown, each bar is the completion of that value.
+const breakdownRows = computed<BreakdownRow[]>(() => {
+  if (breakdown.value === 'points') {
+    return (mine.value?.by_points ?? []).map((row) => ({
+      key: row.points,
+      label: `${row.points} pt${row.points > 1 ? 's' : ''}`,
+      detail: '',
+      flashed: row.flashed,
+      total: row.total,
+      scale: row.total,
+    }))
+  }
+  return visibleCities.value.map((row) => ({
+    key: row.city.id,
+    label: row.city.name,
+    detail: row.country,
+    flashed: row.flashed,
+    total: row.total,
+    scale: CITY_BAR_FLASHES,
+  }))
+})
+const hiddenRows = computed(() =>
+  breakdown.value === 'city' ? (mine.value?.by_city.length ?? 0) - visibleCities.value.length : 0,
+)
 
 const myRank = computed(() => {
   const index = team.value?.ranking.findIndex((row) => row.user.id === auth.me?.id) ?? -1
@@ -94,12 +139,24 @@ const myRank = computed(() => {
       </section>
 
       <section class="card stats__section">
-        <h2>Flashs par ville</h2>
-        <p v-if="!mine.by_city.length" class="muted">Aucune ville pour l'instant.</p>
-        <ul v-else class="stats__cities">
-          <li v-for="row in mine.by_city" :key="row.city.id">
+        <div class="stats__tabs" role="tablist" aria-label="Répartition des flashs">
+          <button
+            v-for="(label, key) in BREAKDOWN_TABS"
+            :key="key"
+            type="button"
+            role="tab"
+            class="stats__tab"
+            :aria-selected="breakdown === key"
+            @click="breakdown = key"
+          >
+            {{ label }}
+          </button>
+        </div>
+        <p v-if="!breakdownRows.length && !hiddenRows" class="muted">Aucun invader pour l'instant.</p>
+        <ul v-else-if="breakdownRows.length" class="stats__cities" role="tabpanel">
+          <li v-for="row in breakdownRows" :key="row.key">
             <div class="stats__city-text">
-              <span>{{ row.city.name }} <small class="muted">{{ row.country }}</small></span>
+              <span>{{ row.label }} <small class="muted">{{ row.detail }}</small></span>
               <span class="stats__num">
                 {{ row.flashed }} flash{{ row.flashed > 1 ? 's' : '' }} <small class="muted">/ {{ row.total }}</small>
               </span>
@@ -107,15 +164,19 @@ const myRank = computed(() => {
             <div
               class="stats__meter"
               role="meter"
-              :aria-valuenow="Math.min(row.flashed, CITY_BAR_FLASHES)"
+              :aria-valuenow="Math.min(row.flashed, row.scale)"
               aria-valuemin="0"
-              :aria-valuemax="CITY_BAR_FLASHES"
-              :aria-label="`Flashs à ${row.city.name}`"
+              :aria-valuemax="row.scale"
+              :aria-label="`Flashs : ${row.label}`"
             >
-              <span class="stats__meter-fill" :style="{ width: `${Math.min(row.flashed / CITY_BAR_FLASHES, 1) * 100}%` }" />
+              <span class="stats__meter-fill" :style="{ width: `${Math.min(row.flashed / row.scale, 1) * 100}%` }" />
             </div>
           </li>
         </ul>
+        <p v-else class="muted">Aucun flash pour l'instant.</p>
+        <button v-if="breakdown === 'city' && (hiddenRows || showAllCities)" type="button" class="stats__more" @click="showAllCities = !showAllCities">
+          {{ showAllCities ? 'Voir moins' : `Voir plus (${hiddenRows} ville${hiddenRows > 1 ? 's' : ''} sans flash)` }}
+        </button>
         <small class="muted">Les invaders détruits ne comptent que si vous les aviez flashés.</small>
       </section>
 
@@ -231,6 +292,46 @@ const myRank = computed(() => {
   gap: 12px;
   margin-bottom: 4px;
   font-size: 0.9rem;
+}
+
+.stats__tabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.stats__tab {
+  flex: 1;
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stats__tab[aria-selected='true'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 15%);
+}
+
+.stats__more {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .stats__meter {

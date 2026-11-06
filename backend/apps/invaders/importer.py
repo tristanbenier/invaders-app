@@ -11,7 +11,7 @@ status, address1, address2, zip, comment, city and flashed_by:
   are kept as they are.
 
 Rows are matched on name within the team: unknown names are created, known
-ones are updated. Other keys are ignored. The import is all-or-nothing.
+ones are updated (or left untouched with skip_existing). Other keys are ignored. The import is all-or-nothing.
 """
 
 import json
@@ -110,8 +110,12 @@ def _plan_flashes(row, members_by_email, today):
     return (None, errors) if errors else (flashes, [])
 
 
-def analyze(team, rows):
-    """Validate every row and describe what the import would do."""
+def analyze(team, rows, skip_existing=False):
+    """Validate every row and describe what the import would do.
+
+    With skip_existing, rows naming an invader the team already has are set aside
+    without being validated: neither the invader nor its flashes change.
+    """
     existing = {invader.name: invader for invader in Invader.objects.filter(team=team)}
     cities_by_prefix = {city.prefix: city for city in City.objects.filter(team=team)}
     members_by_email = {user.email.lower(): user for user in User.objects.filter(team=team, is_active=True)}
@@ -122,6 +126,7 @@ def analyze(team, rows):
         "to_create": [],
         "to_update": [],
         "unchanged": [],
+        "skipped": [],
         "errors": [],
         "new_cities": {},
         "existing_countries": {name.lower() for name in Country.objects.filter(team=team).values_list("name", flat=True)},
@@ -132,6 +137,9 @@ def analyze(team, rows):
             result["errors"].append({"index": index, "name": None, "errors": ["Chaque élément doit être un objet."]})
             continue
         raw_name = str(row.get("name", "")).strip().upper()
+        if skip_existing and raw_name in existing:
+            result["skipped"].append(raw_name)
+            continue
         parsed = parse_name(raw_name)
         if parsed and parsed[0] not in cities_by_prefix:
             _, error = _plan_city(row, parsed[0], cities_by_prefix, result["new_cities"])
@@ -175,6 +183,7 @@ def summarize(result):
             "to_create": len(result["to_create"]),
             "to_update": len(result["to_update"]),
             "unchanged": len(result["unchanged"]),
+            "skipped": len(result["skipped"]),
             "errors": len(result["errors"]),
             "cities_to_create": len(new_cities),
             "flashes": sum(len(item["flashes"]) for item in items),

@@ -9,7 +9,7 @@ from .models import City, Flash, Invader, Status
 
 
 class MyStatsView(APIView):
-    """Score, progression over time and completion per city for the current user."""
+    """Score, progression over time and completion per city and per point value for the current user."""
 
     def get(self, request):
         user = request.user
@@ -60,6 +60,18 @@ class MyStatsView(APIView):
             key=lambda row: (-row["flashed"], -row["flashed"] / row["total"], row["city"]["name"]),
         )
 
+        mine = Q(flashes__user=user)
+        by_points = list(
+            Invader.objects.filter(team=user.team)
+            .values("points")
+            .annotate(
+                total=Count("pk", filter=~Q(status=Status.DESTROYED) | mine, distinct=True),
+                flashed=Count("pk", filter=mine, distinct=True),
+            )
+            .filter(total__gt=0)
+            .order_by("points")
+        )
+
         return Response(
             {
                 "points": cumulative_points,
@@ -68,6 +80,7 @@ class MyStatsView(APIView):
                 "team_invaders": Invader.objects.filter(team=user.team).count(),
                 "timeline": timeline,
                 "by_city": by_city,
+                "by_points": by_points,
             }
         )
 

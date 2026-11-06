@@ -62,6 +62,11 @@ class InvaderImportForm(TeamAndAuthorForm):
     mark_as_flashed = forms.BooleanField(
         label="Marquer tous ces invaders comme flashés par l'auteur", required=False
     )
+    skip_existing = forms.BooleanField(
+        label="Ne pas modifier les invaders existants",
+        required=False,
+        help_text="Les invaders déjà présents dans l'équipe (même nom) sont ignorés : seuls les nouveaux sont créés.",
+    )
 
 
 class MultipleFileInput(forms.ClearableFileInput):
@@ -133,7 +138,7 @@ def import_invaders_view(model_admin, request):
             team, author = form.cleaned_data["team"], form.cleaned_data["author"]
             rows = json.loads(path.read_text(encoding="utf-8"))
             # Analyzed again: the data may have changed since the preview.
-            result = importer.analyze(team, rows)
+            result = importer.analyze(team, rows, request.POST.get("skip_existing") == "on")
             if result["errors"]:
                 messages.error(request, "Le fichier contient des erreurs : rien n'a été importé.")
             else:
@@ -156,7 +161,8 @@ def import_invaders_view(model_admin, request):
             form.add_error("file", str(exc))
         else:
             team = form.cleaned_data["team"]
-            summary = importer.summarize(importer.analyze(team, rows))
+            skip_existing = form.cleaned_data["skip_existing"]
+            summary = importer.summarize(importer.analyze(team, rows, skip_existing))
             return render(
                 request,
                 "admin/invaders/invader/import_invaders_preview.html",
@@ -170,6 +176,7 @@ def import_invaders_view(model_admin, request):
                     "team": team,
                     "author": form.cleaned_data["author"],
                     "mark_as_flashed": form.cleaned_data["mark_as_flashed"],
+                    "skip_existing": skip_existing,
                 },
             )
     return render(request, "admin/invaders/invader/import_invaders.html", {**context, "form": form})

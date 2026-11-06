@@ -278,6 +278,7 @@ class ImportView(APIView):
             if isinstance(request.data, list):
                 rows = importer.validate_rows_shape(request.data)
                 mark_as_flashed = request.query_params.get("mark_as_flashed") == "true"
+                skip_existing = request.query_params.get("skip_existing") == "true"
             else:
                 options = ImportOptionsSerializer(data=request.data)
                 options.is_valid(raise_exception=True)
@@ -285,10 +286,11 @@ class ImportView(APIView):
                     raise ValidationError({"file": "Aucun fichier fourni."})
                 rows = importer.read_rows(options.validated_data["file"])
                 mark_as_flashed = options.validated_data["mark_as_flashed"]
+                skip_existing = options.validated_data["skip_existing"]
         except importer.ImportFileError as exc:
             raise ValidationError({"file": str(exc)})
 
-        result = importer.analyze(team, rows)
+        result = importer.analyze(team, rows, skip_existing)
         summary = importer.summarize(result)
         if not self.commit:
             return Response(summary)
