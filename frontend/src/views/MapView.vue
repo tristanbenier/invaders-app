@@ -54,6 +54,17 @@ function saveView(instance: L.Map) {
   }
 }
 
+// Grouping of nearby markers, on unless turned off (per browser, like the view).
+const CLUSTERING_STORAGE_KEY = 'invaders.mapClustering'
+
+function savedClustering() {
+  try {
+    return localStorage.getItem(CLUSTERING_STORAGE_KEY) !== 'off'
+  } catch {
+    return true
+  }
+}
+
 const route = useRoute()
 const router = useRouter()
 const invaders = useInvadersStore()
@@ -66,10 +77,14 @@ const auth = useAuthStore()
 const mapElement = ref<HTMLElement>()
 const map = shallowRef<L.Map>()
 const showFilters = ref(false)
+const clustering = ref(savedClustering())
 const toast = ref<string | null>(null)
 const picking = ref<{ message: string; resolve: (point: LatLng | null) => void; marker: L.Marker } | null>(null)
 
 let clusters: L.MarkerClusterGroup
+// Without clustering, only the markers around the visible area are on the map.
+let plainMarkers: L.LayerGroup
+let markers: L.Marker[] = []
 let basemap: L.MaplibreGL | undefined
 let userMarker: L.CircleMarker | undefined
 let accuracyCircle: L.Circle | undefined
@@ -113,18 +128,40 @@ function invaderIcon(invader: Invader, extraClass = '') {
 }
 
 function renderMarkers() {
-  clusters.clearLayers()
-  clusters.addLayers(
-    invaders.items
-      .filter((invader) => !isIssInvader(invader))
-      .map((invader) =>
-        L.marker([invader.lat, invader.lng], { icon: invaderIcon(invader), title: invader.name, keyboard: true }).on(
-          'click',
-          () => router.push({ name: 'invader', params: { id: invader.id } }),
-        ),
+  markers = invaders.items
+    .filter((invader) => !isIssInvader(invader))
+    .map((invader) =>
+      L.marker([invader.lat, invader.lng], { icon: invaderIcon(invader), title: invader.name, keyboard: true }).on(
+        'click',
+        () => router.push({ name: 'invader', params: { id: invader.id } }),
       ),
-  )
+    )
+  clusters.clearLayers()
+  plainMarkers.clearLayers()
+  if (clustering.value) clusters.addLayers(markers)
+  else renderVisibleMarkers()
   renderIss()
+}
+
+/** Without clustering: add the markers entering the visible area, drop those far outside. */
+function renderVisibleMarkers() {
+  if (clustering.value || !map.value) return
+  const bounds = map.value.getBounds().pad(0.3)
+  for (const marker of markers) {
+    const visible = bounds.contains(marker.getLatLng())
+    if (visible && !plainMarkers.hasLayer(marker)) plainMarkers.addLayer(marker)
+    else if (!visible && plainMarkers.hasLayer(marker)) plainMarkers.removeLayer(marker)
+  }
+}
+
+function toggleClustering() {
+  clustering.value = !clustering.value
+  try {
+    localStorage.setItem(CLUSTERING_STORAGE_KEY, clustering.value ? 'on' : 'off')
+  } catch {
+    // Storage unavailable (private mode): the choice lasts until reload.
+  }
+  renderMarkers()
 }
 
 /** SPACE2ISS at the live ISS position (its stored position until the first answer). */
@@ -269,6 +306,8 @@ onMounted(() => {
     iconCreateFunction: (cluster) =>
       L.divIcon({ className: 'cluster', html: `<span>${cluster.getChildCount()}</span>`, iconSize: [40, 40] }),
   }).addTo(instance)
+  plainMarkers = L.layerGroup().addTo(instance)
+  instance.on('moveend', renderVisibleMarkers)
   // Long press on touch screens, right click with a mouse.
   instance.on('contextmenu', (event: L.LeafletMouseEvent) => {
     if (picking.value) return
@@ -341,6 +380,17 @@ watch(
           <AppIcon name="moon" :size="20" />
         </button>
       </div>
+      <button
+        type="button"
+        class="btn btn--icon map-view__control"
+        :class="{ 'map-view__control--active': clustering }"
+        :aria-pressed="clustering"
+        :title="clustering ? 'Dégrouper les invaders' : 'Regrouper les invaders'"
+        aria-label="Regrouper les invaders proches"
+        @click="toggleClustering"
+      >
+        <AppIcon name="cluster" />
+      </button>
       <button type="button" class="btn btn--icon map-view__control" aria-label="Me localiser" @click="locate">
         <AppIcon name="locate" />
       </button>
