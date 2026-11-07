@@ -16,6 +16,7 @@ import SearchBox from '@/components/SearchBox.vue'
 import { type LatLng, MAP_CONTEXT } from '@/composables/mapContext'
 import { useGeolocation } from '@/composables/useGeolocation'
 import { isIssInvader, useIssPosition } from '@/composables/useIssPosition'
+import { useLocalStorage } from '@/composables/useLocalStorage'
 import { useAuthStore } from '@/stores/auth'
 import { useFiltersStore } from '@/stores/filters'
 import { useInvadersStore } from '@/stores/invaders'
@@ -33,36 +34,15 @@ function basemapStyle(theme: keyof typeof BASEMAP_STYLES) {
 }
 const DEFAULT_VIEW = { center: [48.8566, 2.3522] as L.LatLngTuple, zoom: 13 }
 // Last map view, restored on reload (per browser, nothing to sync).
-const VIEW_STORAGE_KEY = 'invaders.mapView'
-
-function savedView(): { center: L.LatLngTuple; zoom: number } | null {
-  try {
-    const view = JSON.parse(localStorage.getItem(VIEW_STORAGE_KEY) ?? 'null')
-    if (view && [view.lat, view.lng, view.zoom].every(Number.isFinite)) return { center: [view.lat, view.lng], zoom: view.zoom }
-  } catch {
-    // Storage blocked or corrupted value: use the default view.
-  }
-  return null
+interface SavedView {
+  lat: number
+  lng: number
+  zoom: number
 }
 
-function saveView(instance: L.Map) {
-  const { lat, lng } = instance.getCenter()
-  try {
-    localStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify({ lat, lng, zoom: instance.getZoom() }))
-  } catch {
-    // Storage unavailable (private mode): the view is simply not remembered.
-  }
-}
-
-// Grouping of nearby markers, on unless turned off (per browser, like the view).
-const CLUSTERING_STORAGE_KEY = 'invaders.mapClustering'
-
-function savedClustering() {
-  try {
-    return localStorage.getItem(CLUSTERING_STORAGE_KEY) !== 'off'
-  } catch {
-    return true
-  }
+function isSavedView(value: unknown): value is SavedView {
+  const view = value as SavedView | null
+  return !!view && [view.lat, view.lng, view.zoom].every(Number.isFinite)
 }
 
 const route = useRoute()
@@ -77,7 +57,9 @@ const auth = useAuthStore()
 const mapElement = ref<HTMLElement>()
 const map = shallowRef<L.Map>()
 const showFilters = ref(false)
-const clustering = ref(savedClustering())
+const savedView = useLocalStorage<SavedView | null>('invaders.mapView', null, isSavedView)
+// Grouping of nearby markers, on unless turned off (per browser, like the view).
+const clustering = useLocalStorage('invaders.mapClustering', true, (value) => typeof value === 'boolean')
 const toast = ref<string | null>(null)
 const picking = ref<{ message: string; resolve: (point: LatLng | null) => void; marker: L.Marker } | null>(null)
 
@@ -156,11 +138,6 @@ function renderVisibleMarkers() {
 
 function toggleClustering() {
   clustering.value = !clustering.value
-  try {
-    localStorage.setItem(CLUSTERING_STORAGE_KEY, clustering.value ? 'on' : 'off')
-  } catch {
-    // Storage unavailable (private mode): the choice lasts until reload.
-  }
   renderMarkers()
 }
 
@@ -292,11 +269,15 @@ provide(MAP_CONTEXT, {
 })
 
 onMounted(() => {
-  const restored = savedView()
+  const restored = savedView.value
   // A remembered view wins over the first geolocation fix (the locate button still recenters).
   centeredOnUser = restored !== null
-  const instance = L.map(mapElement.value!, { zoomControl: false, maxZoom: 19, ...(restored ?? DEFAULT_VIEW) })
-  instance.on('moveend', () => saveView(instance))
+  const view = restored ? { center: [restored.lat, restored.lng] as L.LatLngTuple, zoom: restored.zoom } : DEFAULT_VIEW
+  const instance = L.map(mapElement.value!, { zoomControl: false, maxZoom: 19, ...view })
+  instance.on('moveend', () => {
+    const { lat, lng } = instance.getCenter()
+    savedView.value = { lat, lng, zoom: instance.getZoom() }
+  })
   basemap = L.maplibreGL({ style: basemapStyle(mapTheme.value) }).addTo(instance)
   clusters = L.markerClusterGroup({
     chunkedLoading: true,
