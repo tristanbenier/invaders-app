@@ -10,7 +10,7 @@ import FieldErrors from '@/components/FieldErrors.vue'
 import InvaderHistory from '@/components/InvaderHistory.vue'
 import InvaderPhoto from '@/components/InvaderPhoto.vue'
 import { directionsTo } from '@/composables/directions'
-import { formatDate, today } from '@/composables/format'
+import { formatDate } from '@/composables/format'
 import { useOptionalMapContext } from '@/composables/mapContext'
 import { useFormErrors } from '@/composables/useFormErrors'
 import { isIssInvader, useIssPosition } from '@/composables/useIssPosition'
@@ -30,7 +30,6 @@ const { errors, capture, clear } = useFormErrors()
 
 const invader = ref<InvaderDetail | null>(null)
 const loadError = ref<string | null>(null)
-const flashDate = ref(today())
 const busy = ref(false)
 
 const city = computed(() => (invader.value ? places.cityById.get(invader.value.city) : undefined))
@@ -60,7 +59,6 @@ async function load(id: number) {
   clear()
   try {
     invader.value = await invadersApi.get(id)
-    flashDate.value = invader.value.my_flashed_at ?? today()
     focusedOnIss = false
     if (onIss.value) focusIss()
     else mapContext?.focus(invader.value)
@@ -100,7 +98,8 @@ async function run(action: () => Promise<InvaderDetail | void>) {
   }
 }
 
-const flash = () => run(() => invadersApi.flash(invader.value!.id, flashDate.value))
+// The flash date is no longer shown or asked: the backend records today's date.
+const flash = () => run(() => invadersApi.flash(invader.value!.id))
 const unflash = () => run(() => invadersApi.unflash(invader.value!.id))
 
 async function move() {
@@ -178,16 +177,12 @@ async function remove() {
         <template v-if="invader.my_flashed_at">
           <p class="detail__flashed">
             <AppIcon name="check" :size="18" />
-            Flashé le {{ formatDate(invader.my_flashed_at) }}
+            Flashé
           </p>
           <button type="button" class="btn btn--block" :disabled="busy" @click="unflash">Annuler mon flash</button>
         </template>
         <template v-else>
-          <label class="field">
-            <span>Date du flash</span>
-            <input v-model="flashDate" class="input" type="date" :max="today()" required />
-          </label>
-          <button type="button" class="btn btn--primary btn--block" :disabled="busy || !flashDate" @click="flash">
+          <button type="button" class="btn btn--primary btn--block" :disabled="busy" @click="flash">
             Je l'ai flashé
           </button>
         </template>

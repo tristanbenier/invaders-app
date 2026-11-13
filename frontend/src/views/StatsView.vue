@@ -3,8 +3,6 @@ import { computed, onMounted, ref } from 'vue'
 
 import { statsApi } from '@/api/endpoints'
 import type { MyStats, TeamStats } from '@/api/types'
-import ProgressChart from '@/components/ProgressChart.vue'
-import { formatDate } from '@/composables/format'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
@@ -13,7 +11,6 @@ const numberFormat = new Intl.NumberFormat('fr-FR')
 const mine = ref<MyStats | null>(null)
 const team = ref<TeamStats | null>(null)
 const error = ref<string | null>(null)
-const showTable = ref(false)
 const showAllCities = ref(false)
 
 onMounted(async () => {
@@ -109,34 +106,6 @@ const myRank = computed(() => {
         </div>
       </div>
 
-      <section class="card stats__section">
-        <header class="stats__section-header">
-          <h2>Progression du score</h2>
-          <button v-if="mine.timeline.length" type="button" class="btn stats__toggle" @click="showTable = !showTable">
-            {{ showTable ? 'Voir le graphique' : 'Voir les données' }}
-          </button>
-        </header>
-        <p v-if="!mine.timeline.length" class="muted">Pas encore de flash : votre progression apparaîtra ici.</p>
-        <table v-else-if="showTable" class="stats__table">
-          <thead>
-            <tr>
-              <th scope="col">Date</th>
-              <th scope="col" class="stats__num">Flashs</th>
-              <th scope="col" class="stats__num">Points</th>
-              <th scope="col" class="stats__num">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="point in [...mine.timeline].reverse()" :key="point.date">
-              <td>{{ formatDate(point.date) }}</td>
-              <td class="stats__num">{{ point.flashes }}</td>
-              <td class="stats__num">+{{ point.points }}</td>
-              <td class="stats__num">{{ numberFormat.format(point.cumulative_points) }}</td>
-            </tr>
-          </tbody>
-        </table>
-        <ProgressChart v-else :points="mine.timeline" />
-      </section>
 
       <section class="card stats__section">
         <div class="stats__tabs" role="tablist" aria-label="Répartition des flashs">
@@ -260,21 +229,6 @@ const myRank = computed(() => {
 
 .stats__section h2 {
   font-size: 1.05rem;
-}
-
-.stats__section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.stats__toggle {
-  flex-shrink: 0;
-  white-space: nowrap;
-  min-height: 36px;
-  padding: 6px 12px;
-  font-size: 0.85rem;
 }
 
 .stats__cities {
