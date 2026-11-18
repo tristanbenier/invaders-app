@@ -76,11 +76,14 @@ textarea {
 
 .input {
   width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
+  min-height: 30px;
+  padding: 4px 8px;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 5px;
+}
+.input.large {
+  min-height: 48px;
 }
 
 /* Custom caret: the native one sticks to the right edge. */
@@ -107,7 +110,7 @@ select.input {
   min-height: 44px;
   padding: 10px 16px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 5px;
   background: var(--surface-2);
   cursor: pointer;
   text-decoration: none;
@@ -179,11 +182,12 @@ select.input {
 }
 
 .chip {
-  min-height: 40px;
-  min-width: 48px;
-  padding: 6px 14px;
+  min-height: 30px;
+  font-size: .85em;
+  min-width: 45px;
+  padding: 4px 8px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 5px;
   background: var(--bg);
   cursor: pointer;
 }

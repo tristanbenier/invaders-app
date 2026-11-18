@@ -1,4 +1,4 @@
-from django.db.models import Count, Exists, IntegerField, OuterRef, ProtectedError, Q, Subquery, Value
+from django.db.models import Count, Exists, F, IntegerField, Max, OuterRef, ProtectedError, Q, Subquery, Value
 from django.db.models.functions import Coalesce
 from django.conf import settings
 from django.http import HttpResponse
@@ -38,7 +38,7 @@ ORDERING = {
     "-points": ["-points", "prefix", "number"],
     "created_at": ["created_at"],
     "-created_at": ["-created_at"],
-    # Only with ?flashed_by=: date at which that member flashed the invader.
+    # Only with ?flashed_by= (date at which the last of those members flashed it) or ?flashed=true (mine).
     "flashed_at": ["member_flashed_at", "prefix", "number"],
     "-flashed_at": ["-member_flashed_at", "prefix", "number"],
 }
@@ -58,15 +58,27 @@ class OptionalPagination(PageNumberPagination):
         return super().paginate_queryset(queryset, request, view)
 
 
-def _id_param(request, param, allow_me=False):
+def _id_param(request, param):
     value = request.query_params.get(param)
     if value is None:
         return None
-    if allow_me and value == "me":
-        return request.user.pk
     if not value.isdigit():
         raise ValidationError({param: "Identifiant invalide."})
     return int(value)
+
+
+def _id_list_param(request, param):
+    """Comma-separated member ids ("me" allowed), or [] when absent."""
+    values = [value for value in request.query_params.get(param, "").split(",") if value]
+    ids = []
+    for value in values:
+        if value == "me":
+            ids.append(request.user.pk)
+        elif value.isdigit():
+            ids.append(int(value))
+        else:
+            raise ValidationError({param: "Identifiants invalides."})
+    return sorted(set(ids))
 
 
 class TeamScopedViewSet(viewsets.ModelViewSet):
@@ -164,20 +176,33 @@ class InvaderViewSet(TeamScopedViewSet):
         flashed = params.get("flashed")
         if flashed in ("true", "false"):
             queryset = queryset.filter(my_flashed_at__isnull=flashed == "false")
-        flashed_by = _id_param(self.request, "flashed_by", allow_me=True)
-        if flashed_by is not None:
-            member_flash = Flash.objects.filter(invader=OuterRef("pk"), user_id=flashed_by)
-            queryset = queryset.filter(Exists(member_flash)).annotate(
-                member_flashed_at=Subquery(member_flash.values("flashed_at")[:1])
+        # Several members: flashed by all of them, and flashed by none of the others.
+        flashed_by = _id_list_param(self.request, "flashed_by")
+        for member in flashed_by:
+            queryset = queryset.filter(Exists(Flash.objects.filter(invader=OuterRef("pk"), user_id=member)))
+        if flashed_by:
+            # Sort key: when the last of them flashed it.
+            last_flash = (
+                Flash.objects.filter(invader=OuterRef("pk"), user_id__in=flashed_by)
+                .values("invader")
+                .annotate(last=Max("flashed_at"))
+                .values("last")
             )
-        if (member := _id_param(self.request, "not_flashed_by", allow_me=True)) is not None:
-            queryset = queryset.filter(~Exists(Flash.objects.filter(invader=OuterRef("pk"), user_id=member)))
+            queryset = queryset.annotate(member_flashed_at=Subquery(last_flash))
+        if not_flashed_by := _id_list_param(self.request, "not_flashed_by"):
+            queryset = queryset.filter(
+                ~Exists(Flash.objects.filter(invader=OuterRef("pk"), user_id__in=not_flashed_by))
+            )
 
         ordering = params.get("ordering", "name")
         if ordering not in ORDERING:
             raise ValidationError({"ordering": f"Tri inconnu. Valeurs possibles : {', '.join(ORDERING)}."})
-        if ordering in FLASHED_BY_ORDERINGS and flashed_by is None:
-            raise ValidationError({"ordering": "Le tri par date de flash nécessite le filtre « Flashé par »."})
+        if ordering in FLASHED_BY_ORDERINGS and not flashed_by:
+            if flashed != "true":
+                raise ValidationError(
+                    {"ordering": "Le tri par date de flash nécessite le filtre « Flashé par » ou « Flashés »."}
+                )
+            queryset = queryset.annotate(member_flashed_at=F("my_flashed_at"))
         return queryset.order_by(*ORDERING[ordering])
 
     def perform_create(self, serializer):

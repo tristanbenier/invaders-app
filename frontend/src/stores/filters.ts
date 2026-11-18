@@ -12,8 +12,9 @@ export const useFiltersStore = defineStore('filters', () => {
     points: [] as number[],
     city: null as number | null,
     country: null as number | null,
-    flashedBy: null as number | null,
-    notFlashedBy: null as number | null,
+    // Flashed by all of these members / by none of those.
+    flashedBy: [] as number[],
+    notFlashedBy: [] as number[],
   })
 
   const query = computed<InvaderFilters>(() => ({
@@ -22,8 +23,8 @@ export const useFiltersStore = defineStore('filters', () => {
     points: state.points.join(','),
     city: state.city,
     country: state.country,
-    flashed_by: state.flashedBy,
-    not_flashed_by: state.notFlashedBy,
+    flashed_by: state.flashedBy.join(','),
+    not_flashed_by: state.notFlashedBy.join(','),
   }))
 
   const activeCount = computed(
@@ -34,8 +35,8 @@ export const useFiltersStore = defineStore('filters', () => {
         state.points.length > 0,
         state.city,
         state.country,
-        state.flashedBy,
-        state.notFlashedBy,
+        state.flashedBy.length > 0,
+        state.notFlashedBy.length > 0,
       ].filter(Boolean).length,
   )
 
@@ -46,8 +47,8 @@ export const useFiltersStore = defineStore('filters', () => {
       points: [],
       city: null,
       country: null,
-      flashedBy: null,
-      notFlashedBy: null,
+      flashedBy: [],
+      notFlashedBy: [],
     })
   }
 

@@ -14,6 +14,10 @@ const statuses = Object.entries(STATUS_LABELS) as [Status, string][]
 // Point values used by Invader.
 const POINT_VALUES = [10, 20, 30, 40, 50, 100]
 const members = computed(() => team.team?.members ?? [])
+const MEMBER_FILTERS = [
+  { key: 'flashedBy', label: 'Flashé par', hint: 'tous' },
+  { key: 'notFlashedBy', label: 'Non flashé par', hint: 'aucun' },
+] as const
 const cities = computed(() =>
   places.cities.filter((city) => filters.state.country === null || city.country === filters.state.country),
 )
@@ -26,6 +30,11 @@ function toggleStatus(status: Status) {
 function togglePoints(value: number) {
   const current = filters.state.points
   filters.state.points = current.includes(value) ? current.filter((p) => p !== value) : [...current, value]
+}
+
+function toggleMember(list: 'flashedBy' | 'notFlashedBy', id: number) {
+  const current = filters.state[list]
+  filters.state[list] = current.includes(id) ? current.filter((member) => member !== id) : [...current, id]
 }
 
 function onCountryChange() {
@@ -104,22 +113,22 @@ function onCountryChange() {
       </label>
     </div>
 
-    <div class="filters__row">
-      <label class="field">
-        <span>Flashé par</span>
-        <select v-model="filters.state.flashedBy" class="input">
-          <option :value="null">Peu importe</option>
-          <option v-for="member in members" :key="member.id" :value="member.id">{{ member.display_name }}</option>
-        </select>
-      </label>
-      <label class="field">
-        <span>Non flashé par</span>
-        <select v-model="filters.state.notFlashedBy" class="input">
-          <option :value="null">Peu importe</option>
-          <option v-for="member in members" :key="member.id" :value="member.id">{{ member.display_name }}</option>
-        </select>
-      </label>
-    </div>
+    <fieldset v-for="group in MEMBER_FILTERS" :key="group.key" class="filters__group">
+      <legend>{{ group.label }} <small class="muted">({{ group.hint }})</small></legend>
+      <div class="chips">
+        <button
+          v-for="member in members"
+          :key="member.id"
+          type="button"
+          class="chip"
+          :class="{ 'chip--active': filters.state[group.key].includes(member.id) }"
+          :aria-pressed="filters.state[group.key].includes(member.id)"
+          @click="toggleMember(group.key, member.id)"
+        >
+          {{ member.display_name }}
+        </button>
+      </div>
+    </fieldset>
 
     <button type="button" class="btn btn--block" :disabled="!filters.activeCount" @click="filters.reset()">
       Réinitialiser les filtres

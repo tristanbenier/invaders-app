@@ -39,15 +39,15 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const search = ref('')
 const ordering = ref<Ordering>('name')
-const orderings = computed(() =>
-  filters.state.flashedBy === null ? ORDERINGS : [...ORDERINGS, ...FLASH_DATE_ORDERINGS],
-)
-// Back to the name order when "Flashé par" is cleared. Synchronous, so that the list reloads
+// Flash dates exist only when every listed invader is flashed: by the chosen member, or by me.
+const byFlashDate = computed(() => filters.state.flashedBy.length > 0 || filters.state.flashed === 'yes')
+const orderings = computed(() => (byFlashDate.value ? [...ORDERINGS, ...FLASH_DATE_ORDERINGS] : ORDERINGS))
+// Back to the name order when those filters are cleared. Synchronous, so that the list reloads
 // once with both changes rather than first with an ordering the API refuses.
 watch(
-  () => filters.state.flashedBy,
-  (member) => {
-    if (member === null && ordering.value.endsWith('flashed_at')) ordering.value = 'name'
+  byFlashDate,
+  (available) => {
+    if (!available && ordering.value.endsWith('flashed_at')) ordering.value = 'name'
   },
   { flush: 'sync' },
 )
@@ -147,7 +147,7 @@ function state(invader: Invader) {
         <AppIcon name="search" :size="18" class="gallery__search-icon" />
         <input
           v-model="search"
-          class="input"
+          class="input large"
           type="search"
           placeholder="Rechercher (PA_123)"
           autocapitalize="characters"

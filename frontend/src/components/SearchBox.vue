@@ -118,7 +118,7 @@ function submit() {
     <AppIcon name="search" class="search__icon" :size="18" />
     <input
       v-model="query"
-      class="input search__input"
+      class="input large search__input"
       type="search"
       enterkeyhint="search"
       placeholder="Invader ou adresse"

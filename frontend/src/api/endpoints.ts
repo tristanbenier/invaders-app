@@ -22,8 +22,9 @@ export interface InvaderFilters {
   status?: string
   points?: string
   flashed?: 'true' | 'false'
-  flashed_by?: number | null
-  not_flashed_by?: number | null
+  /** Comma-separated member ids: flashed by all of them / by none of them. */
+  flashed_by?: string
+  not_flashed_by?: string
   ordering?: string
 }
 

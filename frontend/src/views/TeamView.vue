@@ -101,7 +101,7 @@ const logout = () =>
   <div class="page team">
     <header class="team__header">
       <div>
-        <h1>{{ teamStore.team?.name ?? auth.me?.team.name }}</h1>
+        <h1>Mon compte</h1>
         <p class="muted">Connecté en tant que {{ auth.me?.display_name }}</p>
       </div>
       <button type="button" class="btn btn--icon" aria-label="Se déconnecter" :disabled="busy" @click="logout">
@@ -141,7 +141,7 @@ const logout = () =>
     </section>
 
     <section class="card team__section">
-      <h2>Membres ({{ teamStore.team?.members.length ?? 0 }})</h2>
+      <h2>{{ teamStore.team?.name ?? auth.me?.team.name }} ({{ teamStore.team?.members.length ?? 0 }})</h2>
       <ul class="team__list">
         <li v-for="member in teamStore.team?.members ?? []" :key="member.id">
           <div class="team__item-text">

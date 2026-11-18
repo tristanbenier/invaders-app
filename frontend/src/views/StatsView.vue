@@ -198,11 +198,9 @@ const myRank = computed(() => {
             </tr>
           </tbody>
         </table>
-        <small v-if="team.ranking.some((row) => row.points_from_app)" class="muted">
-          * Score de l'app Flash Invaders (compte synchronisé).
-        </small>
       </section>
     </div>
+    <small class="muted">* Données provenant de l'app Flash Invaders (compte synchronisé).</small>
   </div>
 </template>
 
@@ -348,8 +346,8 @@ const myRank = computed(() => {
 }
 
 .stats__tab[aria-selected='true'] {
-  background: var(--surface);
-  color: var(--text);
+  background: var(--accent);
+  color: var(--surface);
   box-shadow: 0 1px 2px rgb(0 0 0 / 15%);
 }
 

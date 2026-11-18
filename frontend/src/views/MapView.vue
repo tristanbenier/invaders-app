@@ -451,7 +451,7 @@ watch(
   padding: 3px;
   gap: 3px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 5px;
   background: var(--surface);
   box-shadow: var(--shadow);
 }
@@ -462,7 +462,7 @@ watch(
   width: 38px;
   height: 38px;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   background: transparent;
   color: var(--muted);
   cursor: pointer;

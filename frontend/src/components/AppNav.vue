@@ -18,7 +18,7 @@ import AppIcon from './AppIcon.vue'
     </RouterLink>
     <RouterLink to="/team" class="nav__link" active-class="nav__link--active">
       <AppIcon name="team" />
-      <span>Équipe</span>
+      <span>Compte</span>
     </RouterLink>
   </nav>
 </template>
