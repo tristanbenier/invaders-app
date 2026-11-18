@@ -19,6 +19,12 @@ const ORDERINGS = [
   ['points', 'Points (croissant)'],
   ['-created_at', 'Ajout récent'],
 ] as const
+// Only offered with the "Flashé par" filter: date at which that member flashed the invader.
+const FLASH_DATE_ORDERINGS = [
+  ['flashed_at', 'Date de flash (croissante)'],
+  ['-flashed_at', 'Date de flash (décroissante)'],
+] as const
+type Ordering = (typeof ORDERINGS)[number][0] | (typeof FLASH_DATE_ORDERINGS)[number][0]
 
 const filters = useFiltersStore()
 const places = usePlacesStore()
@@ -32,7 +38,19 @@ const hasMore = ref(true)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const search = ref('')
-const ordering = ref<(typeof ORDERINGS)[number][0]>('name')
+const ordering = ref<Ordering>('name')
+const orderings = computed(() =>
+  filters.state.flashedBy === null ? ORDERINGS : [...ORDERINGS, ...FLASH_DATE_ORDERINGS],
+)
+// Back to the name order when "Flashé par" is cleared. Synchronous, so that the list reloads
+// once with both changes rather than first with an ordering the API refuses.
+watch(
+  () => filters.state.flashedBy,
+  (member) => {
+    if (member === null && ordering.value.endsWith('flashed_at')) ordering.value = 'name'
+  },
+  { flush: 'sync' },
+)
 const showFilters = ref(false)
 const sentinel = ref<HTMLElement>()
 
@@ -157,7 +175,7 @@ function state(invader: Invader) {
     <label class="field gallery__ordering">
       <span>Trier par</span>
       <select v-model="ordering" class="input">
-        <option v-for="[value, label] in ORDERINGS" :key="value" :value="value">{{ label }}</option>
+        <option v-for="[value, label] in orderings" :key="value" :value="value">{{ label }}</option>
       </select>
     </label>
 

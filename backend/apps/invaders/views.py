@@ -38,7 +38,11 @@ ORDERING = {
     "-points": ["-points", "prefix", "number"],
     "created_at": ["created_at"],
     "-created_at": ["-created_at"],
+    # Only with ?flashed_by=: date at which that member flashed the invader.
+    "flashed_at": ["member_flashed_at", "prefix", "number"],
+    "-flashed_at": ["-member_flashed_at", "prefix", "number"],
 }
+FLASHED_BY_ORDERINGS = {"flashed_at", "-flashed_at"}
 
 
 class OptionalPagination(PageNumberPagination):
@@ -160,14 +164,20 @@ class InvaderViewSet(TeamScopedViewSet):
         flashed = params.get("flashed")
         if flashed in ("true", "false"):
             queryset = queryset.filter(my_flashed_at__isnull=flashed == "false")
-        if (member := _id_param(self.request, "flashed_by", allow_me=True)) is not None:
-            queryset = queryset.filter(Exists(Flash.objects.filter(invader=OuterRef("pk"), user_id=member)))
+        flashed_by = _id_param(self.request, "flashed_by", allow_me=True)
+        if flashed_by is not None:
+            member_flash = Flash.objects.filter(invader=OuterRef("pk"), user_id=flashed_by)
+            queryset = queryset.filter(Exists(member_flash)).annotate(
+                member_flashed_at=Subquery(member_flash.values("flashed_at")[:1])
+            )
         if (member := _id_param(self.request, "not_flashed_by", allow_me=True)) is not None:
             queryset = queryset.filter(~Exists(Flash.objects.filter(invader=OuterRef("pk"), user_id=member)))
 
         ordering = params.get("ordering", "name")
         if ordering not in ORDERING:
             raise ValidationError({"ordering": f"Tri inconnu. Valeurs possibles : {', '.join(ORDERING)}."})
+        if ordering in FLASHED_BY_ORDERINGS and flashed_by is None:
+            raise ValidationError({"ordering": "Le tri par date de flash nécessite le filtre « Flashé par »."})
         return queryset.order_by(*ORDERING[ordering])
 
     def perform_create(self, serializer):
