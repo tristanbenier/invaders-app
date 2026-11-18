@@ -10,7 +10,7 @@ once an hour (to pick up invaders the team added to its map since).
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from urllib.error import URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -20,12 +20,15 @@ from django.core.cache import cache
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from .models import Flash, Invader
+from . import history
+from .models import Flash, HistoryAction, Invader, Status
 
 TIMEOUT_SECONDS = 10
 COUNT_CACHE_SECONDS = 3600
 # The account summary (score, flash count) shown on the stats page; refreshed by every sync.
 ACCOUNT_CACHE_SECONDS = 60
+# A flash this recent proves the invader is intact; older ones say nothing about today.
+INTACT_PROOF_DAYS = 7
 
 
 class FlashInvadersError(Exception):
@@ -86,7 +89,7 @@ def sync(user, full=False):
     """Flash for `user` every team invader flashed in the app, with the app's flash date.
 
     Returns the names of the newly flashed invaders and the number of flashes whose date was
-    corrected. Flashes are never removed: one cancelled here comes back while the app has it.
+    corrected. A new flash less than a week old sets the invader back to intact. Flashes are never removed: one cancelled here comes back while the app has it.
     """
     uid = user.flash_invaders_uid
     count_key = f"flash_invaders:count:{user.pk}"
@@ -117,10 +120,17 @@ def sync(user, full=False):
     # Invaders the team has not mapped yet are skipped (the API gives no position).
     missing = Invader.objects.filter(team=user.team, name__in=flashed).exclude(pk__in=already)
     created = []
+    proof_since = timezone.localdate() - timedelta(days=INTACT_PROOF_DAYS)
     for invader in missing:
+        flashed_at = flashed[invader.name]
         try:
             with transaction.atomic():
-                Flash.objects.create(user=user, invader=invader, flashed_at=flashed[invader.name])
+                Flash.objects.create(user=user, invader=invader, flashed_at=flashed_at)
+                if invader.status != Status.OK and flashed_at >= proof_since:
+                    before = history.snapshot(invader)
+                    invader.status = Status.OK
+                    invader.save(update_fields=["status", "updated_at"])
+                    history.record(invader, user, HistoryAction.UPDATED, before)
         except IntegrityError:
             # Flashed meanwhile (another tab or the button): nothing to do.
             continue
