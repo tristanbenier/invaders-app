@@ -62,6 +62,18 @@ class MeView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 
+class FlashInvadersUidView(APIView):
+    """The member's own Flash Invaders UID, shown on demand in the settings (never in /auth/me/)."""
+
+    throttle_scope = "auth"
+
+    def get(self, request):
+        response = Response({"uid": request.user.flash_invaders_uid})
+        # A secret: keep it out of every cache.
+        response["Cache-Control"] = "no-store"
+        return response
+
+
 class PublicInvitationView(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
     throttle_scope = "auth"

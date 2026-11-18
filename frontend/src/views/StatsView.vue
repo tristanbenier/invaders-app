@@ -108,7 +108,7 @@ const myRank = computed(() => {
         </div>
         <div class="card stats__tile">
           <span class="stats__label">Classement équipe</span>
-          <span class="stats__value">{{ myRank ?? '—' }}<small v-if="myRank" class="muted"> / {{ team.ranking.length }}</small></span>
+          <span class="stats__value">{{ myRank ?? '—' }}<small><sup>{{ myRank === 1 ? 'er' : 'e' }}</sup></small><small v-if="myRank" class="muted"> / {{ team.ranking.length }}</small></span>
         </div>
       </div>
 

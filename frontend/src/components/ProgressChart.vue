@@ -17,7 +17,8 @@ const props = withDefaults(defineProps<{ timelines: MemberTimeline[]; meId?: num
 // each, slightly transparent, in the timelines' fixed (join) order so a member keeps their
 // color. Dataviz reference dark steps minus green and aqua (too close to the accent), ordered
 // so that neighbours stay apart (adjacent pairs validated on the card surface #1f1c2e).
-const ME_COLOR = '#7cf29c'
+// The theme's "flashed" green (#7cf29c in the default theme).
+const ME_COLOR = 'var(--flashed)'
 const OTHER_COLORS = ['#e66767', '#9085e9', '#d95926', '#3987e5', '#d55181', '#c98500']
 const OTHER_OPACITY = 0.65
 const HEIGHT = 220

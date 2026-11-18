@@ -16,6 +16,10 @@ import AppIcon from './AppIcon.vue'
       <AppIcon name="chart" />
       <span>Stats</span>
     </RouterLink>
+    <RouterLink to="/settings" class="nav__link" active-class="nav__link--active">
+      <AppIcon name="settings" />
+      <span>Réglages</span>
+    </RouterLink>
     <RouterLink to="/team" class="nav__link" active-class="nav__link--active">
       <AppIcon name="team" />
       <span>Compte</span>

@@ -30,6 +30,7 @@ export interface InvaderFilters {
 
 export const authApi = {
   me: () => api<Me>('/auth/me/'),
+  flashInvadersUid: () => api<{ uid: string }>('/auth/me/flash-invaders-uid/'),
   updateMe: (body: { map_theme?: MapTheme; flash_invaders_uid?: string; manual_flash?: boolean }) =>
     api<Me>('/auth/me/', { method: 'PATCH', body }),
   login: (email: string, password: string) => api<Me>('/auth/login/', { method: 'POST', body: { email, password } }),

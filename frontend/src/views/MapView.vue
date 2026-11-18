@@ -475,7 +475,7 @@ watch(
 
 .map-view__add {
   box-shadow: var(--shadow);
-  border-radius: 999px;
+  border-radius: 10px;
   padding: 12px 20px;
 }
 
