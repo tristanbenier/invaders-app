@@ -148,6 +148,7 @@ export interface MyStats {
   flashes: number
   cities: number
   team_invaders: number
+  team_cities: number
   timeline: TimelinePoint[]
   by_city: CityProgress[]
   by_points: PointsProgress[]

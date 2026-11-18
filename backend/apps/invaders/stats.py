@@ -85,6 +85,8 @@ class MyStatsView(APIView):
                 "flashes": cumulative_flashes,
                 "cities": sum(1 for row in by_city if row["flashed"]),
                 "team_invaders": Invader.objects.filter(team=user.team).count(),
+                # Cities with at least one invader on the team map.
+                "team_cities": City.objects.filter(team=user.team, invaders__isnull=False).distinct().count(),
                 "timeline": timeline,
                 "by_city": by_city,
                 "by_points": by_points,

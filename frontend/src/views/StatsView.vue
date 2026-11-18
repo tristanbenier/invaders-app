@@ -88,32 +88,31 @@ const myRank = computed(() => {
     <p v-if="error" class="errors">{{ error }}</p>
     <p v-else-if="!mine || !team" class="muted">Chargement…</p>
 
-    <template v-else>
+    <div v-else class="stats__layout">
       <section class="card stats__hero">
         <span class="stats__label">Mon score</span>
-        <span class="stats__hero-value">{{ numberFormat.format(mine.points) }}</span>
-        <span class="muted">points<template v-if="mine.points_from_app"> · selon Flash Invaders</template></span>
+        <span class="stats__hero-value">
+          {{ numberFormat.format(mine.points) }}<template v-if="mine.points_from_app">*</template>
+        </span>
+        <span class="muted">points</span>
       </section>
 
       <div class="stats__tiles">
         <div class="card stats__tile">
           <span class="stats__label">Flashs</span>
-          <span class="stats__value">{{ numberFormat.format(mine.flashes) }}</span>
-          <small class="muted">sur {{ numberFormat.format(mine.team_invaders) }} recensés</small>
+          <span class="stats__value">{{ numberFormat.format(mine.flashes) }}<small class="muted"> / {{ numberFormat.format(mine.team_invaders) }}</small></span>
         </div>
         <div class="card stats__tile">
-          <span class="stats__label">Villes</span>
-          <span class="stats__value">{{ mine.cities }}</span>
-          <small class="muted">avec au moins un flash</small>
+          <span class="stats__label">Villes ouvertes</span>
+          <span class="stats__value">{{ mine.cities }}<small class="muted"> / {{ numberFormat.format(mine.team_cities) }}</small></span>
         </div>
         <div class="card stats__tile">
-          <span class="stats__label">Classement</span>
+          <span class="stats__label">Classement équipe</span>
           <span class="stats__value">{{ myRank ?? '—' }}<small v-if="myRank" class="muted"> / {{ team.ranking.length }}</small></span>
-          <small class="muted">dans l'équipe</small>
         </div>
       </div>
 
-      <section class="card stats__section">
+      <section class="card stats__section stats__progress">
         <h2>Progression</h2>
         <div class="stats__tabs" role="tablist" aria-label="Progression de l'équipe">
           <button
@@ -133,7 +132,7 @@ const myRank = computed(() => {
         <small v-if="progressMembers.length" class="muted">Invaders présents sur la carte de l'équipe uniquement.</small>
       </section>
 
-      <section class="card stats__section">
+      <section class="card stats__section stats__breakdown">
         <div class="stats__tabs" role="tablist" aria-label="Répartition des flashs">
           <button
             v-for="(label, key) in BREAKDOWN_TABS"
@@ -175,7 +174,7 @@ const myRank = computed(() => {
         <small class="muted">Les invaders détruits ne comptent que si vous les aviez flashés.</small>
       </section>
 
-      <section class="card stats__section">
+      <section class="card stats__section stats__ranking">
         <h2>Classement de l'équipe</h2>
         <table class="stats__table">
           <thead>
@@ -203,11 +202,57 @@ const myRank = computed(() => {
           * Score de l'app Flash Invaders (compte synchronisé).
         </small>
       </section>
-    </template>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.stats {
+  max-width: 960px;
+}
+
+.stats__layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Desktop (gallery width): score | tiles, progression, breakdown | ranking. */
+@media (min-width: 768px) {
+  .stats__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'hero tiles'
+      'progress progress'
+      'breakdown ranking';
+    align-items: start;
+  }
+
+  .stats__hero {
+    grid-area: hero;
+    align-self: stretch;
+    justify-content: center;
+  }
+
+  .stats__tiles {
+    grid-area: tiles;
+    align-self: stretch;
+  }
+
+  .stats__progress {
+    grid-area: progress;
+  }
+
+  .stats__breakdown {
+    grid-area: breakdown;
+  }
+
+  .stats__ranking {
+    grid-area: ranking;
+  }
+}
+
 .stats__hero {
   display: flex;
   flex-direction: column;
@@ -235,7 +280,10 @@ const myRank = computed(() => {
 .stats__tile {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 2px;
+  text-align: center;
   padding: 12px;
   min-width: 0;
 }
