@@ -24,6 +24,8 @@ export interface Me {
   map_theme: MapTheme
   /** A Flash Invaders UID is saved (the UID itself is never sent back). */
   flash_sync_enabled: boolean
+  /** Keep the manual flash buttons even with the sync on. */
+  manual_flash: boolean
 }
 
 export interface Member {

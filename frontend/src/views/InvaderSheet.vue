@@ -14,6 +14,7 @@ import { formatDate } from '@/composables/format'
 import { useOptionalMapContext } from '@/composables/mapContext'
 import { useFormErrors } from '@/composables/useFormErrors'
 import { isIssInvader, useIssPosition } from '@/composables/useIssPosition'
+import { useFlashSyncFailing } from '@/composables/useFlashSync'
 import { useAuthStore } from '@/stores/auth'
 import { useInvadersStore } from '@/stores/invaders'
 import { usePlacesStore } from '@/stores/places'
@@ -21,6 +22,10 @@ import { usePlacesStore } from '@/stores/places'
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const flashSyncFailing = useFlashSyncFailing()
+// With a working Flash Invaders sync, flashes come from the app only, unless the member
+// kept the manual buttons (option in the team screen).
+const manualFlash = computed(() => !auth.me?.flash_sync_enabled || auth.me.manual_flash || flashSyncFailing.value)
 const places = usePlacesStore()
 const invaders = useInvadersStore()
 const mapContext = useOptionalMapContext()
@@ -179,17 +184,19 @@ async function remove() {
             <AppIcon name="check" :size="18" />
             Flashé le {{ formatDate(invader.my_flashed_at) }}
           </p>
-          <!-- With the Flash Invaders sync, flashes come from the app only. -->
-          <button v-if="!auth.me?.flash_sync_enabled" type="button" class="btn btn--block" :disabled="busy" @click="unflash">
+          <button v-if="manualFlash" type="button" class="btn btn--block" :disabled="busy" @click="unflash">
             Annuler mon flash
           </button>
         </template>
-        <p v-else-if="auth.me?.flash_sync_enabled" class="muted">
+        <p v-else-if="!manualFlash" class="muted">
           Pas encore flashé : votre flash dans l'app Flash Invaders apparaîtra ici automatiquement.
         </p>
         <button v-else type="button" class="btn btn--primary btn--block" :disabled="busy" @click="flash">
           Je l'ai flashé
         </button>
+        <p v-if="auth.me?.flash_sync_enabled && flashSyncFailing" class="muted">
+          La synchro Flash Invaders ne répond pas : vous pouvez flasher à la main en attendant.
+        </p>
         <FieldErrors :messages="[...(errors._ ?? []), ...(errors.flashed_at ?? [])]" />
       </section>
 

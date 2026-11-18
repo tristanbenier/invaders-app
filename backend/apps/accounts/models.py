@@ -71,6 +71,8 @@ class User(AbstractUser):
     # Identifies the member's Flash Invaders account (apps/invaders/flash_invaders.py): secret,
     # never serialized back to the browser.
     flash_invaders_uid = models.CharField("UID Flash Invaders", max_length=64, blank=True)
+    # Keep the manual flash buttons despite the sync (e.g. while the app's API is broken).
+    manual_flash = models.BooleanField("flash manuel avec la synchro", default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["display_name"]

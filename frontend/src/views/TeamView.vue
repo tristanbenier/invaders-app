@@ -82,6 +82,9 @@ const enableFlashSync = () =>
     flashInvadersUid.value = ''
   })
 
+const toggleManualFlash = (event: Event) =>
+  run(() => auth.setManualFlash((event.target as HTMLInputElement).checked))
+
 function disableFlashSync() {
   if (!window.confirm('Désactiver la synchro ? Votre UID sera effacé.')) return
   run(() => auth.setFlashInvadersUid(''))
@@ -112,6 +115,10 @@ const logout = () =>
       <h2>Synchro Flash Invaders</h2>
       <template v-if="auth.me?.flash_sync_enabled">
         <p class="muted">Active : les invaders flashés dans l'app Flash Invaders sont cochés ici automatiquement (vérification chaque minute tant que l'app est ouverte).</p>
+        <label class="team__check">
+          <input type="checkbox" :checked="auth.me.manual_flash" :disabled="busy" @change="toggleManualFlash" />
+          <span>Garder les boutons « Je l'ai flashé » et « Annuler mon flash » (utile si la synchro ne marche plus)</span>
+        </label>
         <button type="button" class="btn" :disabled="busy" @click="disableFlashSync">Désactiver la synchro</button>
       </template>
       <template v-else>
@@ -211,6 +218,17 @@ const logout = () =>
 .team__section p {
   margin: 0;
   font-size: 0.9rem;
+}
+
+.team__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.team__check input {
+  margin-top: 3px;
 }
 
 .team__invite {

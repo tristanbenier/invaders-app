@@ -50,10 +50,14 @@ export const useAuthStore = defineStore('auth', () => {
     me.value = await authApi.updateMe({ flash_invaders_uid: uid })
   }
 
+  async function setManualFlash(enabled: boolean) {
+    me.value = await authApi.updateMe({ manual_flash: enabled })
+  }
+
   async function logout() {
     await authApi.logout()
     me.value = null
   }
 
-  return { me, loaded, isAuthenticated, isAdmin, fetchMe, login, acceptInvitation, setMapTheme, setFlashInvadersUid, logout }
+  return { me, loaded, isAuthenticated, isAdmin, fetchMe, login, acceptInvitation, setMapTheme, setFlashInvadersUid, setManualFlash, logout }
 })

@@ -1,10 +1,19 @@
-import { onBeforeUnmount, watch } from 'vue'
+import { onBeforeUnmount, readonly, ref, watch } from 'vue'
 
+import { ApiError } from '@/api/client'
 import { invadersApi } from '@/api/endpoints'
 import { useAuthStore } from '@/stores/auth'
 import { useInvadersStore } from '@/stores/invaders'
 
 const POLL_MS = 60_000
+
+// Last sync failed (Flash Invaders down or its API changed): manual flashing comes back meanwhile.
+const failing = ref(false)
+
+/** Whether the Flash Invaders sync is currently failing (shared by every component). */
+export function useFlashSyncFailing() {
+  return readonly(failing)
+}
 
 /**
  * Flashes here what the member flashed in the Flash Invaders app: a full sync when the app
@@ -21,10 +30,12 @@ export function useFlashSync() {
     running = true
     try {
       const { created } = await invadersApi.syncFlashes(full)
+      failing.value = false
       // New flashes change the markers' colors: reload the map's invaders.
       if (created.length) await invaders.load()
-    } catch {
-      // Flash Invaders unreachable or rate limited: the next tick tries again.
+    } catch (error) {
+      // Being rate limited is not a failure; anything else is, until a sync succeeds again.
+      if (!(error instanceof ApiError && error.status === 429)) failing.value = true
     } finally {
       running = false
     }
@@ -44,6 +55,7 @@ export function useFlashSync() {
     () => auth.me?.flash_sync_enabled ?? false,
     (enabled) => {
       stop()
+      failing.value = false
       if (!enabled) return
       sync(true)
       timer = setInterval(sync, POLL_MS)

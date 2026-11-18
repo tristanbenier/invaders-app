@@ -33,7 +33,17 @@ class MeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "email", "display_name", "role", "team", "map_theme", "flash_invaders_uid", "flash_sync_enabled"]
+        fields = [
+            "id",
+            "email",
+            "display_name",
+            "role",
+            "team",
+            "map_theme",
+            "flash_invaders_uid",
+            "flash_sync_enabled",
+            "manual_flash",
+        ]
         # Only user preferences are editable here.
         read_only_fields = ["id", "email", "display_name", "role"]
 
