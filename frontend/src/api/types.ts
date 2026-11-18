@@ -141,6 +141,8 @@ export interface TimelinePoint {
 
 export interface MyStats {
   points: number
+  /** `points` is the Flash Invaders app's score (synced account), not the sum of the flashes here. */
+  points_from_app: boolean
   flashes: number
   cities: number
   team_invaders: number
@@ -151,7 +153,8 @@ export interface MyStats {
 
 export interface TeamStats {
   invaders: number
-  ranking: { user: UserSummary; points: number; flashes: number }[]
+  /** `points_from_app`: Flash Invaders score of a synced member, else the sum of their flashes here. */
+  ranking: { user: UserSummary; points: number; points_from_app: boolean; flashes: number }[]
 }
 
 export interface Paginated<T> {

@@ -88,7 +88,7 @@ const myRank = computed(() => {
       <section class="card stats__hero">
         <span class="stats__label">Mon score</span>
         <span class="stats__hero-value">{{ numberFormat.format(mine.points) }}</span>
-        <span class="muted">points</span>
+        <span class="muted">points<template v-if="mine.points_from_app"> · selon Flash Invaders</template></span>
       </section>
 
       <div class="stats__tiles">
@@ -200,10 +200,13 @@ const myRank = computed(() => {
               <td>{{ index + 1 }}</td>
               <td>{{ row.user.display_name }}<template v-if="row.user.id === auth.me?.id"> (vous)</template></td>
               <td class="stats__num">{{ numberFormat.format(row.flashes) }}</td>
-              <td class="stats__num">{{ numberFormat.format(row.points) }}</td>
+              <td class="stats__num">{{ numberFormat.format(row.points) }}<template v-if="row.points_from_app">*</template></td>
             </tr>
           </tbody>
         </table>
+        <small v-if="team.ranking.some((row) => row.points_from_app)" class="muted">
+          * Score de l'app Flash Invaders (compte synchronisé).
+        </small>
       </section>
     </template>
   </div>

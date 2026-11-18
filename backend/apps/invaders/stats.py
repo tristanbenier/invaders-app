@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 from django.db.models import Count, IntegerField, Q, Sum, Value
 from django.db.models.functions import Coalesce
 from rest_framework.response import Response
@@ -5,6 +7,7 @@ from rest_framework.views import APIView
 
 from apps.accounts.models import User
 
+from . import flash_invaders
 from .models import City, Flash, Invader, Status
 
 
@@ -72,9 +75,13 @@ class MyStatsView(APIView):
             .order_by("points")
         )
 
+        # A synced member gets the app's score: the team map may lack some of their invaders.
+        app_score = flash_invaders.score(user)
+
         return Response(
             {
-                "points": cumulative_points,
+                "points": cumulative_points if app_score is None else app_score,
+                "points_from_app": app_score is not None,
                 "flashes": cumulative_flashes,
                 "cities": sum(1 for row in by_city if row["flashed"]),
                 "team_invaders": Invader.objects.filter(team=user.team).count(),
@@ -97,18 +104,22 @@ class TeamStatsView(APIView):
                 points=Coalesce(Sum("flashes__invader__points", filter=team_flashes), Value(0), output_field=IntegerField()),
                 flash_count=Count("flashes", filter=team_flashes),
             )
-            .order_by("-points", "-flash_count", "display_name")
         )
-        return Response(
-            {
-                "invaders": Invader.objects.filter(team=team).count(),
-                "ranking": [
-                    {
-                        "user": {"id": member.id, "display_name": member.display_name},
-                        "points": member.points,
-                        "flashes": member.flash_count,
-                    }
-                    for member in members
-                ],
-            }
-        )
+        # Synced members get their Flash Invaders score (cached a minute, fetched in parallel);
+        # the others, or when the app does not answer, the sum of their flashes here.
+        synced = [member for member in members if member.flash_invaders_uid]
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            app_scores = dict(zip((member.pk for member in synced), pool.map(flash_invaders.score, synced)))
+        ranking = []
+        for member in members:
+            app_score = app_scores.get(member.pk)
+            ranking.append(
+                {
+                    "user": {"id": member.id, "display_name": member.display_name},
+                    "points": member.points if app_score is None else app_score,
+                    "points_from_app": app_score is not None,
+                    "flashes": member.flash_count,
+                }
+            )
+        ranking.sort(key=lambda row: (-row["points"], -row["flashes"], row["user"]["display_name"]))
+        return Response({"invaders": Invader.objects.filter(team=team).count(), "ranking": ranking})

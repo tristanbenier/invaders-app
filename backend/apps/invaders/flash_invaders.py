@@ -24,6 +24,8 @@ from .models import Flash, Invader
 
 TIMEOUT_SECONDS = 10
 COUNT_CACHE_SECONDS = 3600
+# The account summary (score, flash count) shown on the stats page; refreshed by every sync.
+ACCOUNT_CACHE_SECONDS = 60
 
 
 class FlashInvadersError(Exception):
@@ -53,6 +55,26 @@ def check_uid(uid):
     return True
 
 
+def _account(user):
+    account = _get("account", user.flash_invaders_uid)
+    cache.set(f"flash_invaders:account:{user.pk}", account, ACCOUNT_CACHE_SECONDS)
+    return account
+
+
+def score(user):
+    """The member's score in the app (it counts every flash, even off the team map), or None."""
+    if not user.flash_invaders_uid:
+        return None
+    account = cache.get(f"flash_invaders:account:{user.pk}")
+    if account is None:
+        try:
+            account = _account(user)
+        except FlashInvadersError:
+            return None
+    value = account.get("score")
+    return value if isinstance(value, int) else None
+
+
 def _flash_date(value):
     try:
         return datetime.strptime(str(value)[:10], "%Y-%m-%d").date()
@@ -68,7 +90,7 @@ def sync(user, full=False):
     """
     uid = user.flash_invaders_uid
     count_key = f"flash_invaders:count:{user.pk}"
-    count = _get("account", uid).get("si_found")
+    count = _account(user).get("si_found")
     if not full and count is not None and cache.get(count_key) == count:
         return [], 0
 
