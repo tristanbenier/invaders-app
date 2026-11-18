@@ -153,8 +153,15 @@ export interface MyStats {
   by_points: PointsProgress[]
 }
 
+export interface MemberTimeline {
+  user: UserSummary
+  /** Cumulative points of the member on each of their flash days (team invaders only). */
+  points: { date: string; cumulative_points: number }[]
+}
+
 export interface TeamStats {
   invaders: number
+  timelines: MemberTimeline[]
   /** `points_from_app`: Flash Invaders score of a synced member, else the sum of their flashes here. */
   ranking: { user: UserSummary; points: number; points_from_app: boolean; flashes: number }[]
 }
