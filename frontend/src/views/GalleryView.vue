@@ -12,7 +12,8 @@ import { usePlacesStore } from '@/stores/places'
 import { useTeamStore } from '@/stores/team'
 
 const ORDERINGS = [
-  ['name', 'Nom'],
+  ['name', 'Nom (croissant)'],
+  ['-name', 'Nom (décroissant)'],
   ['city', 'Ville'],
   ['-points', 'Points (décroissant)'],
   ['points', 'Points (croissant)'],
