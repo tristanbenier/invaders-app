@@ -98,7 +98,7 @@ async function run(action: () => Promise<InvaderDetail | void>) {
   }
 }
 
-// The flash date is no longer shown or asked: the backend records today's date.
+// No date asked: the backend records today's, then the Flash Invaders sync sets the app's.
 const flash = () => run(() => invadersApi.flash(invader.value!.id))
 const unflash = () => run(() => invadersApi.unflash(invader.value!.id))
 
@@ -177,7 +177,7 @@ async function remove() {
         <template v-if="invader.my_flashed_at">
           <p class="detail__flashed">
             <AppIcon name="check" :size="18" />
-            Flashé
+            Flashé le {{ formatDate(invader.my_flashed_at) }}
           </p>
           <button type="button" class="btn btn--block" :disabled="busy" @click="unflash">Annuler mon flash</button>
         </template>
