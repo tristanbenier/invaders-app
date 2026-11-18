@@ -68,6 +68,9 @@ class User(AbstractUser):
     )
     role = models.CharField("rôle", max_length=10, choices=Role.choices, default=Role.MEMBER)
     map_theme = models.CharField("thème de la carte", max_length=10, choices=MapTheme.choices, default=MapTheme.LIGHT)
+    # Identifies the member's Flash Invaders account (apps/invaders/flash_invaders.py): secret,
+    # never serialized back to the browser.
+    flash_invaders_uid = models.CharField("UID Flash Invaders", max_length=64, blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["display_name"]

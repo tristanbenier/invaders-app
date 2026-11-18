@@ -10,6 +10,7 @@ router.register("invaders", views.InvaderViewSet, basename="invader")
 
 urlpatterns = [
     path("flashes/", views.MyFlashListView.as_view(), name="my-flashes"),
+    path("flashes/sync/", views.FlashSyncView.as_view(), name="flash-sync"),
     path("geocode/reverse/", views.ReverseGeocodeView.as_view(), name="geocode-reverse"),
     path("geocode/search/", views.AddressSearchView.as_view(), name="geocode-search"),
     path("iss/", views.IssPositionView.as_view(), name="iss-position"),

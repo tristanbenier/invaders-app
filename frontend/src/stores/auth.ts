@@ -45,10 +45,15 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** Turns the Flash Invaders sync on with this UID, or off with an empty one. */
+  async function setFlashInvadersUid(uid: string) {
+    me.value = await authApi.updateMe({ flash_invaders_uid: uid })
+  }
+
   async function logout() {
     await authApi.logout()
     me.value = null
   }
 
-  return { me, loaded, isAuthenticated, isAdmin, fetchMe, login, acceptInvitation, setMapTheme, logout }
+  return { me, loaded, isAuthenticated, isAdmin, fetchMe, login, acceptInvitation, setMapTheme, setFlashInvadersUid, logout }
 })

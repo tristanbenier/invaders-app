@@ -3,8 +3,10 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 
 import AppNav from './components/AppNav.vue'
+import { useFlashSync } from './composables/useFlashSync'
 
 const route = useRoute()
+useFlashSync()
 const showNav = computed(() => !route.meta.public && route.name !== undefined)
 </script>
 

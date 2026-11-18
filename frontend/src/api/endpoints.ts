@@ -29,7 +29,8 @@ export interface InvaderFilters {
 
 export const authApi = {
   me: () => api<Me>('/auth/me/'),
-  updateMe: (body: { map_theme: MapTheme }) => api<Me>('/auth/me/', { method: 'PATCH', body }),
+  updateMe: (body: { map_theme?: MapTheme; flash_invaders_uid?: string }) =>
+    api<Me>('/auth/me/', { method: 'PATCH', body }),
   login: (email: string, password: string) => api<Me>('/auth/login/', { method: 'POST', body: { email, password } }),
   logout: () => api<void>('/auth/logout/', { method: 'POST' }),
   invitation: (token: string) => api<PublicInvitation>(`/auth/invitations/${token}/`),
@@ -69,6 +70,9 @@ export const invadersApi = {
   flash: (id: number, flashed_at?: string) =>
     api<InvaderDetail>(`/invaders/${id}/flash/`, { method: 'POST', body: flashed_at ? { flashed_at } : {} }),
   unflash: (id: number) => api<InvaderDetail>(`/invaders/${id}/flash/`, { method: 'DELETE' }),
+  /** Flashes the team invaders flashed in the Flash Invaders app; `full` skips the count shortcut. */
+  syncFlashes: (full: boolean) =>
+    api<{ created: string[]; updated: number }>('/flashes/sync/', { method: 'POST', query: full ? { full: 1 } : {} }),
 }
 
 export const statsApi = {

@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 from apps.accounts.permissions import IsTeamAdmin, IsTeamMember
 from config import ratelimit
 
-from . import geocoding, history, importer, iss, tiles
+from . import flash_invaders, geocoding, history, importer, iss, tiles
 from .models import City, Country, Flash, HistoryAction, Invader, InvaderHistory, Status
 from .naming import search_terms
 from .serializers import (
@@ -262,6 +262,23 @@ class MyFlashListView(generics.ListAPIView):
 
     def get_queryset(self):
         return Flash.objects.filter(user=self.request.user).select_related("invader", "invader__created_by")
+
+
+class FlashSyncView(APIView):
+    """POST: flash the team invaders the member flashed in the Flash Invaders app (?full=1 at startup)."""
+
+    throttle_scope = "flash_sync"
+
+    def post(self, request):
+        if not request.user.flash_invaders_uid:
+            raise ValidationError("Aucun UID Flash Invaders n'est enregistré.")
+        try:
+            created, updated = flash_invaders.sync(request.user, full=request.query_params.get("full") == "1")
+        except flash_invaders.FlashInvadersError:
+            return Response(
+                {"detail": "Flash Invaders est indisponible pour le moment."}, status=status.HTTP_502_BAD_GATEWAY
+            )
+        return Response({"created": created, "updated": updated})
 
 
 class ImportView(APIView):

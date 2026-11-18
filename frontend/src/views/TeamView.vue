@@ -19,6 +19,7 @@ const { errors, capture, clear } = useFormErrors()
 const invitations = ref<Invitation[]>([])
 const inviteEmail = ref('')
 const copiedId = ref<number | null>(null)
+const flashInvadersUid = ref('')
 const busy = ref(false)
 
 async function load() {
@@ -75,6 +76,17 @@ function removeMember(member: Member) {
   })
 }
 
+const enableFlashSync = () =>
+  run(async () => {
+    await auth.setFlashInvadersUid(flashInvadersUid.value.trim())
+    flashInvadersUid.value = ''
+  })
+
+function disableFlashSync() {
+  if (!window.confirm('Désactiver la synchro ? Votre UID sera effacé.')) return
+  run(() => auth.setFlashInvadersUid(''))
+}
+
 const logout = () =>
   run(async () => {
     await auth.logout()
@@ -95,6 +107,31 @@ const logout = () =>
     </header>
 
     <FieldErrors :messages="[...(errors._ ?? []), ...(errors.email ?? [])]" />
+
+    <section class="card team__section">
+      <h2>Synchro Flash Invaders</h2>
+      <template v-if="auth.me?.flash_sync_enabled">
+        <p class="muted">Active : les invaders flashés dans l'app Flash Invaders sont cochés ici automatiquement (vérification chaque minute tant que l'app est ouverte).</p>
+        <button type="button" class="btn" :disabled="busy" @click="disableFlashSync">Désactiver la synchro</button>
+      </template>
+      <template v-else>
+        <p class="muted">Indiquez l'UID de votre compte Flash Invaders pour cocher automatiquement vos flashs. Il reste secret : personne, vous compris, ne pourra le relire ici.</p>
+        <form class="team__invite" @submit.prevent="enableFlashSync">
+          <input
+            v-model="flashInvadersUid"
+            class="input"
+            type="password"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="UID Flash Invaders"
+            aria-label="UID Flash Invaders"
+            required
+          />
+          <button type="submit" class="btn btn--primary" :disabled="busy || !flashInvadersUid.trim()">Activer</button>
+        </form>
+        <FieldErrors :messages="errors.flash_invaders_uid ?? []" />
+      </template>
+    </section>
 
     <section class="card team__section">
       <h2>Membres ({{ teamStore.team?.members.length ?? 0 }})</h2>

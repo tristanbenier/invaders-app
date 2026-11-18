@@ -28,6 +28,7 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ["email", "display_name"]
     fieldsets = [
         (None, {"fields": ["email", "password"]}),
+        # flash_invaders_uid left out on purpose: it is a secret of the member.
         ("Profil", {"fields": ["display_name", "team", "role", "map_theme"]}),
         ("Permissions", {"fields": ["is_active", "is_staff", "is_superuser", "groups", "user_permissions"]}),
         ("Dates", {"fields": ["last_login", "date_joined"]}),

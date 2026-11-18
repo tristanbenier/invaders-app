@@ -22,6 +22,8 @@ export interface Me {
   role: Role
   team: TeamSummary
   map_theme: MapTheme
+  /** A Flash Invaders UID is saved (the UID itself is never sent back). */
+  flash_sync_enabled: boolean
 }
 
 export interface Member {

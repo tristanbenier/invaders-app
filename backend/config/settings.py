@@ -193,6 +193,8 @@ REST_FRAMEWORK = {
         "geocode": "30/min",
         # The map polls the ISS position every 5 s (12/min) while it is open.
         "iss": "30/min",
+        # The SPA asks for a Flash Invaders sync when it opens, then every 60 s while visible.
+        "flash_sync": "6/min",
         "import": "20/hour",
         "invitations": "30/hour",
     },
@@ -209,6 +211,11 @@ INVITATION_VALIDITY_DAYS = 7
 
 # Sent to Nominatim for reverse geocoding; its usage policy requires an identifying value.
 GEOCODER_USER_AGENT = env("GEOCODER_USER_AGENT", default="Invaders/1.0 (team map for Space Invaders)")
+
+# Unofficial API of the Flash Invaders app, read with each member's own UID (flash_invaders.py).
+FLASH_INVADERS_API_URL = env(
+    "FLASH_INVADERS_API_URL", default="https://api.space-invaders.com/flashinvaders_v3_pas_trop_predictif/api"
+)
 
 # The vector basemap is relayed from OpenFreeMap (apps/invaders/tiles.py) and cached on disk.
 TILE_USER_AGENT = env("TILE_USER_AGENT", default=GEOCODER_USER_AGENT)

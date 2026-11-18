@@ -1,10 +1,16 @@
+import re
+
 from django.contrib.auth import authenticate, password_validation
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.invaders import flash_invaders
+
 from .models import Invitation, Team, User
+
+FLASH_INVADERS_UID_PATTERN = re.compile(r"^[0-9A-Za-z-]{8,64}$")
 
 
 class TeamSerializer(serializers.ModelSerializer):
@@ -21,12 +27,24 @@ class MemberSerializer(serializers.ModelSerializer):
 
 class MeSerializer(serializers.ModelSerializer):
     team = TeamSerializer(read_only=True)
+    # The UID is write-only: the browser only learns whether the sync is on. Empty turns it off.
+    flash_invaders_uid = serializers.CharField(write_only=True, required=False, allow_blank=True, max_length=64)
+    flash_sync_enabled = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "email", "display_name", "role", "team", "map_theme"]
+        fields = ["id", "email", "display_name", "role", "team", "map_theme", "flash_invaders_uid", "flash_sync_enabled"]
         # Only user preferences are editable here.
         read_only_fields = ["id", "email", "display_name", "role"]
+
+    def get_flash_sync_enabled(self, user):
+        return bool(user.flash_invaders_uid)
+
+    def validate_flash_invaders_uid(self, uid):
+        uid = uid.strip()
+        if uid and (not FLASH_INVADERS_UID_PATTERN.match(uid) or not flash_invaders.check_uid(uid)):
+            raise serializers.ValidationError("UID inconnu de Flash Invaders.")
+        return uid
 
 
 class TeamDetailSerializer(serializers.ModelSerializer):
