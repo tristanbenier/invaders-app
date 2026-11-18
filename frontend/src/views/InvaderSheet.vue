@@ -178,7 +178,7 @@ async function remove() {
         </div>
       </dl>
 
-      <section class="detail__flash card">
+      <section v-if="invader.my_flashed_at || manualFlash" class="detail__flash card">
         <template v-if="invader.my_flashed_at">
           <p class="detail__flashed">
             <AppIcon name="check" :size="18" />
@@ -188,10 +188,7 @@ async function remove() {
             Annuler mon flash
           </button>
         </template>
-        <p v-else-if="!manualFlash" class="muted">
-          Pas encore flashé : votre flash dans l'app Flash Invaders apparaîtra ici automatiquement.
-        </p>
-        <button v-else type="button" class="btn btn--primary btn--block" :disabled="busy" @click="flash">
+        <button v-else-if="manualFlash" type="button" class="btn btn--primary btn--block" :disabled="busy" @click="flash">
           Je l'ai flashé
         </button>
         <p v-if="auth.me?.flash_sync_enabled && flashSyncFailing" class="muted">
