@@ -28,6 +28,9 @@ const progressMembers = computed(() => (team.value?.timelines ?? []).filter((tim
 // A full city bar means 30 flashes (more stays full).
 const CITY_BAR_FLASHES = 30
 
+const PROGRESS_TABS = { points: 'Par points', flashes: 'Par flashs' } as const
+const progressMetric = ref<keyof typeof PROGRESS_TABS>('points')
+
 const BREAKDOWN_TABS = { city: 'Flashs par ville', points: 'Flashs par points' } as const
 const breakdown = ref<keyof typeof BREAKDOWN_TABS>('city')
 
@@ -111,10 +114,23 @@ const myRank = computed(() => {
       </div>
 
       <section class="card stats__section">
-        <h2>Progression du score</h2>
+        <h2>Progression</h2>
+        <div class="stats__tabs" role="tablist" aria-label="Progression de l'équipe">
+          <button
+            v-for="(label, key) in PROGRESS_TABS"
+            :key="key"
+            type="button"
+            role="tab"
+            class="stats__tab"
+            :aria-selected="progressMetric === key"
+            @click="progressMetric = key"
+          >
+            {{ label }}
+          </button>
+        </div>
         <p v-if="!progressMembers.length" class="muted">Pas encore de flash : la progression de l'équipe apparaîtra ici.</p>
-        <ProgressChart v-else :timelines="team.timelines" :me-id="auth.me?.id" />
-        <small v-if="progressMembers.length" class="muted">Points des invaders présents sur la carte de l'équipe.</small>
+        <ProgressChart v-else role="tabpanel" :timelines="team.timelines" :me-id="auth.me?.id" :metric="progressMetric" />
+        <small v-if="progressMembers.length" class="muted">Invaders présents sur la carte de l'équipe uniquement.</small>
       </section>
 
       <section class="card stats__section">

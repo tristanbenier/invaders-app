@@ -5,10 +5,13 @@ import type { MemberTimeline } from '@/api/types'
 import { formatDate, today } from '@/composables/format'
 
 /**
- * Cumulative score over time, one step line per member, with a legend and a hover crosshair
- * listing every member's score at that date.
+ * Cumulative score (or number of flashes) over time, one step line per member, with a legend
+ * and a hover crosshair listing every member's value at that date.
  */
-const props = defineProps<{ timelines: MemberTimeline[]; meId?: number }>()
+const props = withDefaults(defineProps<{ timelines: MemberTimeline[]; meId?: number; metric?: 'points' | 'flashes' }>(), {
+  meId: undefined,
+  metric: 'points',
+})
 
 // The current member keeps the app's green, opaque and drawn on top. The others get a hue
 // each, slightly transparent, in the timelines' fixed (join) order so a member keeps their
@@ -61,7 +64,10 @@ const series = computed(() => {
         isMe,
         color: isMe ? ME_COLOR : OTHER_COLORS[index % OTHER_COLORS.length]!,
         opacity: isMe ? 1 : OTHER_OPACITY,
-        points: timeline.points.map((point) => ({ time: toTime(point.date), value: point.cumulative_points })),
+        points: timeline.points.map((point) => ({
+          time: toTime(point.date),
+          value: props.metric === 'flashes' ? point.cumulative_flashes : point.cumulative_points,
+        })),
       }
     })
     .filter((member) => member.points.length > 0)
@@ -134,8 +140,9 @@ const hovered = computed(() => {
   return { time, x, rows, left }
 })
 
+const unit = computed(() => (props.metric === 'flashes' ? { short: 'flashs', long: 'flashs' } : { short: 'pts', long: 'points' }))
 const ariaLabel = computed(() =>
-  chart.value.lines.map((line) => `${line.name} : ${numberFormat.format(line.endValue)} points`).join(', '),
+  chart.value.lines.map((line) => `${line.name} : ${numberFormat.format(line.endValue)} ${unit.value.long}`).join(', '),
 )
 </script>
 
@@ -152,7 +159,7 @@ const ariaLabel = computed(() =>
       :width="width"
       :height="HEIGHT"
       role="img"
-      :aria-label="`Score cumulé — ${ariaLabel}`"
+      :aria-label="`${metric === 'flashes' ? 'Flashs cumulés' : 'Score cumulé'} — ${ariaLabel}`"
       @pointermove="onPointerMove"
       @pointerleave="hoverTime = null"
     >
@@ -203,7 +210,7 @@ const ariaLabel = computed(() =>
       <span v-for="row in hovered.rows" :key="row.id" class="progress-chart__row">
         <span class="progress-chart__swatch" :style="{ background: row.color, opacity: row.opacity }" />
         <span>{{ row.name }}</span>
-        <span class="progress-chart__value">{{ numberFormat.format(row.value) }} pts</span>
+        <span class="progress-chart__value">{{ numberFormat.format(row.value) }} {{ unit.short }}</span>
       </span>
     </div>
   </div>

@@ -155,8 +155,8 @@ export interface MyStats {
 
 export interface MemberTimeline {
   user: UserSummary
-  /** Cumulative points of the member on each of their flash days (team invaders only). */
-  points: { date: string; cumulative_points: number }[]
+  /** Cumulative points and flashes of the member on each of their flash days (team invaders only). */
+  points: { date: string; cumulative_points: number; cumulative_flashes: number }[]
 }
 
 export interface TeamStats {

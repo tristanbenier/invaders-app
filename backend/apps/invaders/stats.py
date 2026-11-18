@@ -123,20 +123,22 @@ class TeamStatsView(APIView):
             )
         ranking.sort(key=lambda row: (-row["points"], -row["flashes"], row["user"]["display_name"]))
 
-        # Cumulative points per flash day for every member (team invaders only), in join order
+        # Cumulative points and flashes per flash day for every member (team invaders only), in join order
         # (the chart gives each member a fixed color from that order).
         per_day = (
             Flash.objects.filter(invader__team=team, user__in=[member.pk for member in members])
             .values("user_id", "flashed_at")
-            .annotate(points=Sum("invader__points"))
+            .annotate(points=Sum("invader__points"), flashes=Count("pk"))
             .order_by("user_id", "flashed_at")
         )
-        cumulative = {member.pk: 0 for member in members}
+        cumulative = {member.pk: [0, 0] for member in members}
         points_by_member = {member.pk: [] for member in members}
         for day in per_day:
-            cumulative[day["user_id"]] += day["points"]
+            totals = cumulative[day["user_id"]]
+            totals[0] += day["points"]
+            totals[1] += day["flashes"]
             points_by_member[day["user_id"]].append(
-                {"date": day["flashed_at"], "cumulative_points": cumulative[day["user_id"]]}
+                {"date": day["flashed_at"], "cumulative_points": totals[0], "cumulative_flashes": totals[1]}
             )
         timelines = [
             {"user": {"id": member.id, "display_name": member.display_name}, "points": points_by_member[member.pk]}
