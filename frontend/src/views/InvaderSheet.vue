@@ -179,13 +179,17 @@ async function remove() {
             <AppIcon name="check" :size="18" />
             Flashé le {{ formatDate(invader.my_flashed_at) }}
           </p>
-          <button type="button" class="btn btn--block" :disabled="busy" @click="unflash">Annuler mon flash</button>
-        </template>
-        <template v-else>
-          <button type="button" class="btn btn--primary btn--block" :disabled="busy" @click="flash">
-            Je l'ai flashé
+          <!-- With the Flash Invaders sync, flashes come from the app only. -->
+          <button v-if="!auth.me?.flash_sync_enabled" type="button" class="btn btn--block" :disabled="busy" @click="unflash">
+            Annuler mon flash
           </button>
         </template>
+        <p v-else-if="auth.me?.flash_sync_enabled" class="muted">
+          Pas encore flashé : votre flash dans l'app Flash Invaders apparaîtra ici automatiquement.
+        </p>
+        <button v-else type="button" class="btn btn--primary btn--block" :disabled="busy" @click="flash">
+          Je l'ai flashé
+        </button>
         <FieldErrors :messages="[...(errors._ ?? []), ...(errors.flashed_at ?? [])]" />
       </section>
 
