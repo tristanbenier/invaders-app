@@ -16,10 +16,6 @@ import AppIcon from './AppIcon.vue'
       <AppIcon name="chart" />
       <span>Stats</span>
     </RouterLink>
-    <RouterLink to="/to-flash" class="nav__link" active-class="nav__link--active">
-      <AppIcon name="target" />
-      <span>À flasher</span>
-    </RouterLink>
     <RouterLink to="/team" class="nav__link" active-class="nav__link--active">
       <AppIcon name="team" />
       <span>Équipe</span>

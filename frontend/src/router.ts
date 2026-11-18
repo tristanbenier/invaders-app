@@ -36,7 +36,6 @@ export const router = createRouter({
         { path: 'invaders/:id', name: 'gallery-invader', component: () => import('./views/InvaderSheet.vue') },
       ],
     },
-    { path: '/to-flash', name: 'to-flash', component: () => import('./views/ToFlashView.vue') },
     { path: '/stats', name: 'stats', component: () => import('./views/StatsView.vue') },
     { path: '/team', name: 'team', component: () => import('./views/TeamView.vue') },
     { path: '/:pathMatch(.*)*', redirect: '/' },
