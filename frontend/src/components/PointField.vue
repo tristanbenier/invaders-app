@@ -46,8 +46,10 @@ async function pickOnMap() {
   const initial = point.value ?? mapContext.center()
   const picked = await mapContext.pickLocation(initial, `${props.legend} : déplacez le repère puis validez.`)
   if (!picked) return
-  point.value = { lat: round(picked.lat), lng: round(picked.lng), label: 'Point sur la carte' }
-  point.value = { ...point.value, label: await labelFor(picked.lat, picked.lng, 'Point sur la carte') }
+  // Built from `picked`, not from `point.value`: the model only reflects a new value once the parent re-renders.
+  const chosen = { lat: round(picked.lat), lng: round(picked.lng) }
+  point.value = { ...chosen, label: 'Point sur la carte' }
+  point.value = { ...chosen, label: await labelFor(picked.lat, picked.lng, 'Point sur la carte') }
 }
 
 // Nominatim's policy forbids searching as the user types: only on submit.
@@ -82,7 +84,8 @@ function choose(place: PlaceResult) {
       <button type="button" class="btn" @click="useMyPosition">Ma position</button>
       <button type="button" class="btn" @click="pickOnMap">Sur la carte</button>
     </div>
-    <form class="point__search" @submit.prevent="search">
+    <!-- Nested in the outing form: stop the submit event, or it would also submit that form. -->
+    <form class="point__search" @submit.prevent.stop="search">
       <input v-model="query" class="input" type="search" placeholder="Adresse, quartier, lieu…" :aria-label="`${legend} : adresse`" />
       <button type="submit" class="btn" :disabled="searching || !query.trim()">Chercher</button>
     </form>
