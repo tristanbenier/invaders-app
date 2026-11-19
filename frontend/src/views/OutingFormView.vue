@@ -14,7 +14,7 @@ import { useOutingStore } from '@/stores/outing'
 import { usePlacesStore } from '@/stores/places'
 import { useTeamStore } from '@/stores/team'
 
-const DURATIONS = [30, 60, 90, 120, 180, 240, 360, 480]
+const DURATIONS = [30, 45, 60, 90, 120, 180, 240, 360, 480]
 const modes = Object.entries(TRANSPORT_LABELS) as [TransportMode, string][]
 
 const route = useRoute()
