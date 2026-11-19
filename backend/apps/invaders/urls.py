@@ -1,12 +1,13 @@
 from django.urls import path
 from rest_framework.routers import SimpleRouter
 
-from . import stats, views
+from . import outing_api, stats, views
 
 router = SimpleRouter()
 router.register("countries", views.CountryViewSet, basename="country")
 router.register("cities", views.CityViewSet, basename="city")
 router.register("invaders", views.InvaderViewSet, basename="invader")
+router.register("outings", outing_api.OutingViewSet, basename="outing")
 
 urlpatterns = [
     path("flashes/", views.MyFlashListView.as_view(), name="my-flashes"),

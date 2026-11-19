@@ -149,3 +149,71 @@ class InvaderHistory(models.Model):
 
     def __str__(self):
         return f"{self.invader} — {self.get_action_display()}"
+
+
+class TransportMode(models.TextChoices):
+    WALK = "walk", "À pied"
+    BIKE = "bike", "À vélo"
+    CAR = "car", "En voiture"
+    TRANSIT = "transit", "En transports"
+
+
+class Outing(models.Model):
+    """A planned route through invaders that none of the participants has flashed yet."""
+
+    team = models.ForeignKey(Team, verbose_name="équipe", related_name="outings", on_delete=models.CASCADE)
+    name = models.CharField("nom", max_length=100)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="créée par",
+        related_name="created_outings",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    participants = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, verbose_name="participants", related_name="outings", blank=True
+    )
+    # Optional area: only this city's invaders are candidates.
+    city = models.ForeignKey(
+        City, verbose_name="ville", related_name="outings", on_delete=models.SET_NULL, null=True, blank=True
+    )
+    mode = models.CharField("moyen de transport", max_length=10, choices=TransportMode.choices)
+    duration_minutes = models.PositiveIntegerField(
+        "durée (minutes)", validators=[MinValueValidator(10), MaxValueValidator(24 * 60)]
+    )
+    start_lat = models.DecimalField("départ (latitude)", max_digits=9, decimal_places=6)
+    start_lng = models.DecimalField("départ (longitude)", max_digits=9, decimal_places=6)
+    start_label = models.CharField("départ", max_length=255, blank=True)
+    # A loop ends where it started (end_* then mirror start_*).
+    is_loop = models.BooleanField("boucle", default=False)
+    end_lat = models.DecimalField("arrivée (latitude)", max_digits=9, decimal_places=6)
+    end_lng = models.DecimalField("arrivée (longitude)", max_digits=9, decimal_places=6)
+    end_label = models.CharField("arrivée", max_length=255, blank=True)
+    created_at = models.DateTimeField("créée le", auto_now_add=True)
+    updated_at = models.DateTimeField("modifiée le", auto_now=True)
+
+    class Meta:
+        verbose_name = "sortie"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.name
+
+
+class OutingStop(models.Model):
+    """An invader of an outing, at its place in the route."""
+
+    outing = models.ForeignKey(Outing, verbose_name="sortie", related_name="stops", on_delete=models.CASCADE)
+    invader = models.ForeignKey(Invader, verbose_name="invader", related_name="outing_stops", on_delete=models.CASCADE)
+    position = models.PositiveIntegerField("ordre")
+
+    class Meta:
+        verbose_name = "étape"
+        ordering = ["outing", "position"]
+        constraints = [
+            models.UniqueConstraint(fields=["outing", "invader"], name="unique_invader_per_outing"),
+        ]
+
+    def __str__(self):
+        return f"{self.outing} — {self.position}. {self.invader}"

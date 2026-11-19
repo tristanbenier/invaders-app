@@ -9,6 +9,8 @@ import type {
   MapTheme,
   Me,
   MyStats,
+  Outing,
+  OutingInput,
   Paginated,
   PublicInvitation,
   Team,
@@ -46,6 +48,19 @@ export const teamApi = {
   invitations: () => api<Invitation[]>('/invitations/'),
   invite: (email = '') => api<Invitation>('/invitations/', { method: 'POST', body: { email } }),
   revokeInvitation: (id: number) => api<void>(`/invitations/${id}/`, { method: 'DELETE' }),
+}
+
+export const outingsApi = {
+  list: () => api<Outing[]>('/outings/'),
+  get: (id: number) => api<Outing>(`/outings/${id}/`),
+  create: (body: OutingInput) => api<Outing>('/outings/', { method: 'POST', body }),
+  update: (id: number, body: Partial<OutingInput> & { stop_ids?: number[] }) =>
+    api<Outing>(`/outings/${id}/`, { method: 'PATCH', body }),
+  remove: (id: number) => api<void>(`/outings/${id}/`, { method: 'DELETE' }),
+  /** Recompute the whole route from the outing's settings. */
+  plan: (id: number) => api<Outing>(`/outings/${id}/plan/`, { method: 'POST' }),
+  /** Shortest order for the current invaders. */
+  optimize: (id: number) => api<Outing>(`/outings/${id}/optimize/`, { method: 'POST' }),
 }
 
 export const placesApi = {

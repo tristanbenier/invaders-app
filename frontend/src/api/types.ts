@@ -173,3 +173,48 @@ export interface Paginated<T> {
   previous: string | null
   results: T[]
 }
+
+export type TransportMode = 'walk' | 'bike' | 'car' | 'transit'
+
+export const TRANSPORT_LABELS: Record<TransportMode, string> = {
+  walk: 'À pied',
+  bike: 'À vélo',
+  car: 'En voiture',
+  transit: 'En transports',
+}
+
+export interface OutingStop {
+  position: number
+  invader: { id: number; name: string; lat: number; lng: number; points: number; status: Status }
+  /** Every participant has flashed it. */
+  done: boolean
+}
+
+export interface Outing {
+  id: number
+  name: string
+  created_by: UserSummary | null
+  participants: number[]
+  participant_names: UserSummary[]
+  city: number | null
+  mode: TransportMode
+  duration_minutes: number
+  start_lat: number
+  start_lng: number
+  start_label: string
+  is_loop: boolean
+  end_lat: number
+  end_lng: number
+  end_label: string
+  stops: OutingStop[]
+  /** As the crow flies + 30% for the streets, flashes included. */
+  estimate: { distance_km: number; minutes: number }
+  created_at: string
+  updated_at: string
+}
+
+export type OutingInput = Pick<
+  Outing,
+  'name' | 'participants' | 'city' | 'mode' | 'duration_minutes' | 'start_lat' | 'start_lng' | 'start_label' | 'is_loop'
+> &
+  Partial<Pick<Outing, 'end_lat' | 'end_lng' | 'end_label'>>

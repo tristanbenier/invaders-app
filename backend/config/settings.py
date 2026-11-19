@@ -195,6 +195,8 @@ REST_FRAMEWORK = {
         "iss": "30/min",
         # The SPA asks for a Flash Invaders sync when it opens, then every 60 s while visible.
         "flash_sync": "6/min",
+        # Planning an outing walks through every candidate invader.
+        "outing_plan": "20/min",
         "import": "20/hour",
         "invitations": "30/hour",
     },

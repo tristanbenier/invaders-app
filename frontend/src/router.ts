@@ -26,6 +26,10 @@ export const router = createRouter({
         { path: 'invaders/new', name: 'invader-new', component: () => import('./views/InvaderFormView.vue') },
         { path: 'invaders/:id', name: 'invader', component: () => import('./views/InvaderSheet.vue') },
         { path: 'invaders/:id/edit', name: 'invader-edit', component: () => import('./views/InvaderFormView.vue') },
+        { path: 'outings', name: 'outings', component: () => import('./views/OutingsView.vue') },
+        { path: 'outings/new', name: 'outing-new', component: () => import('./views/OutingFormView.vue') },
+        { path: 'outings/:id', name: 'outing', component: () => import('./views/OutingSheet.vue') },
+        { path: 'outings/:id/edit', name: 'outing-edit', component: () => import('./views/OutingFormView.vue') },
       ],
     },
     {

@@ -20,6 +20,7 @@ import { useLocalStorage } from '@/composables/useLocalStorage'
 import { useAuthStore } from '@/stores/auth'
 import { useFiltersStore } from '@/stores/filters'
 import { useInvadersStore } from '@/stores/invaders'
+import { useOutingStore } from '@/stores/outing'
 import { usePlacesStore } from '@/stores/places'
 import { useTeamStore } from '@/stores/team'
 
@@ -53,6 +54,7 @@ const places = usePlacesStore()
 const team = useTeamStore()
 const geo = useGeolocation()
 const auth = useAuthStore()
+const outing = useOutingStore()
 
 const mapElement = ref<HTMLElement>()
 const map = shallowRef<L.Map>()
@@ -67,6 +69,8 @@ let clusters: L.MarkerClusterGroup
 // Without clustering, only the markers around the visible area are on the map.
 let plainMarkers: L.LayerGroup
 let markers: L.Marker[] = []
+// Outing mode: numbered stops, the route line and its start/end, above the other markers.
+let outingLayer: L.LayerGroup
 let basemap: L.MaplibreGL | undefined
 let userMarker: L.CircleMarker | undefined
 let accuracyCircle: L.Circle | undefined
@@ -111,7 +115,8 @@ function invaderIcon(invader: Invader, extraClass = '') {
 
 function renderMarkers() {
   markers = invaders.items
-    .filter((invader) => !isIssInvader(invader))
+    // In outing mode the stops are drawn by renderOuting, numbered.
+    .filter((invader) => !isIssInvader(invader) && !outing.stopIds.has(invader.id))
     .map((invader) =>
       L.marker([invader.lat, invader.lng], { icon: invaderIcon(invader), title: invader.name, keyboard: true }).on(
         'click',
@@ -123,6 +128,52 @@ function renderMarkers() {
   if (clustering.value) clusters.addLayers(markers)
   else renderVisibleMarkers()
   renderIss()
+}
+
+function endpointIcon(label: string) {
+  return L.divIcon({ className: 'outing-endpoint', html: `<span>${label}</span>`, iconSize: [26, 26], iconAnchor: [13, 13] })
+}
+
+/** Outing mode: the route line, its start and end, and the stops numbered in visiting order. */
+function renderOuting() {
+  outingLayer.clearLayers()
+  const current = outing.active
+  if (!current) return
+  const start: L.LatLngTuple = [current.start_lat, current.start_lng]
+  const end: L.LatLngTuple = [current.end_lat, current.end_lng]
+  const stops = current.stops.map((stop): L.LatLngTuple => [stop.invader.lat, stop.invader.lng])
+  L.polyline([start, ...stops, end], { className: 'outing-route', interactive: false }).addTo(outingLayer)
+  L.marker(start, { icon: endpointIcon(current.is_loop ? 'D/A' : 'D'), title: `Départ : ${current.start_label}`, zIndexOffset: 400 }).addTo(outingLayer)
+  if (!current.is_loop) {
+    L.marker(end, { icon: endpointIcon('A'), title: `Arrivée : ${current.end_label}`, zIndexOffset: 400 }).addTo(outingLayer)
+  }
+  for (const stop of current.stops) {
+    L.marker([stop.invader.lat, stop.invader.lng], {
+      icon: L.divIcon({
+        className: `pin pin--stop${stop.done ? ' pin--stop-done' : ''}`,
+        html: `<span>${stop.position}</span>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+      }),
+      title: `${stop.position}. ${stop.invader.name}`,
+      keyboard: true,
+      zIndexOffset: 500,
+    })
+      .on('click', () => router.push({ name: 'invader', params: { id: stop.invader.id } }))
+      .addTo(outingLayer)
+  }
+}
+
+/** Shows the whole outing (route and stops). */
+function fitOuting() {
+  const current = outing.active
+  if (!map.value || !current) return
+  const points: L.LatLngTuple[] = [
+    [current.start_lat, current.start_lng],
+    [current.end_lat, current.end_lng],
+    ...current.stops.map((stop): L.LatLngTuple => [stop.invader.lat, stop.invader.lng]),
+  ]
+  map.value.fitBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 17 })
 }
 
 /** Without clustering: add the markers entering the visible area, drop those far outside. */
@@ -288,6 +339,7 @@ onMounted(() => {
       L.divIcon({ className: 'cluster', html: `<span>${cluster.getChildCount()}</span>`, iconSize: [40, 40] }),
   }).addTo(instance)
   plainMarkers = L.layerGroup().addTo(instance)
+  outingLayer = L.layerGroup().addTo(instance)
   instance.on('moveend', renderVisibleMarkers)
   // Long press on touch screens, right click with a mouse.
   instance.on('contextmenu', (event: L.LeafletMouseEvent) => {
@@ -297,8 +349,10 @@ onMounted(() => {
   map.value = instance
 
   renderMarkers()
+  renderOuting()
   geo.start()
   invaders.load()
+  outing.refresh()
   places.load()
   team.load()
 })
@@ -311,6 +365,15 @@ onBeforeUnmount(() => {
 })
 
 watch(() => invaders.items, renderMarkers)
+watch(
+  () => outing.active,
+  (current, previous) => {
+    renderMarkers()
+    renderOuting()
+    // A newly shown outing: frame it.
+    if (current && current.id !== previous?.id) fitOuting()
+  },
+)
 watch(mapTheme, (theme) => basemap?.getMaplibreMap().setStyle(basemapStyle(theme)))
 watch(iss.position, (point) => point && issMarker?.setLatLng([point.lat, point.lng]))
 watch(geo.position, renderUserPosition)
@@ -321,7 +384,7 @@ watch(
 </script>
 
 <template>
-  <div class="map-view" :class="[`map-view--${mapTheme}`, { 'map-view--picking': picking }]">
+  <div class="map-view" :class="[`map-view--${mapTheme}`, { 'map-view--picking': picking, 'map-view--outing': outing.active }]">
     <div ref="mapElement" class="map-view__map" />
 
     <div class="map-view__top">
@@ -335,6 +398,20 @@ watch(
       >
         <AppIcon name="filter" />
         <span v-if="filters.activeCount" class="badge">{{ filters.activeCount }}</span>
+      </button>
+    </div>
+
+    <div v-if="outing.active && !picking" class="map-view__outing card" role="status">
+      <div class="map-view__outing-text">
+        <strong>{{ outing.active.name }}</strong>
+        <small class="muted">{{ outing.progress.done }} / {{ outing.progress.total }} flashés</small>
+      </div>
+      <button type="button" class="btn btn--icon" aria-label="Recentrer sur la sortie" title="Recentrer" @click="fitOuting">
+        <AppIcon name="route" :size="20" />
+      </button>
+      <RouterLink :to="{ name: 'outing', params: { id: outing.active.id } }" class="btn">Détails</RouterLink>
+      <button type="button" class="btn btn--icon" aria-label="Quitter le mode sortie" title="Quitter" @click="outing.hide()">
+        <AppIcon name="close" :size="20" />
       </button>
     </div>
 
@@ -372,6 +449,9 @@ watch(
       >
         <AppIcon name="cluster" />
       </button>
+      <RouterLink :to="{ name: 'outings' }" class="btn btn--icon map-view__control" aria-label="Sorties" title="Sorties">
+        <AppIcon name="flag" />
+      </RouterLink>
       <button type="button" class="btn btn--icon map-view__control" aria-label="Me localiser" @click="locate">
         <AppIcon name="locate" />
       </button>
@@ -477,6 +557,33 @@ watch(
   box-shadow: var(--shadow);
   border-radius: 10px;
   padding: 12px 20px;
+}
+
+.map-view__outing {
+  position: absolute;
+  top: calc(68px + env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  max-width: 420px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 14px;
+  box-shadow: var(--shadow);
+}
+
+.map-view__outing-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-view__outing-text strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .map-view__picking {
@@ -601,6 +708,44 @@ watch(
   50% {
     box-shadow: 0 0 0 8px rgb(90 170 255 / 0.35);
   }
+}
+
+/* Outing mode: the stops stand out, numbered; the other invaders fade. */
+.pin--stop {
+  color: var(--accent-text);
+  background: var(--accent);
+  border-color: var(--surface);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.pin--stop-done {
+  color: var(--text);
+  background: var(--destroyed);
+}
+
+.map-view--outing .pin:not(.pin--stop),
+.map-view--outing .cluster {
+  opacity: 0.3;
+}
+
+.outing-route {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-dasharray: 6 8;
+  stroke-linecap: round;
+}
+
+.outing-endpoint {
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.7rem;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.5);
 }
 
 .cluster {

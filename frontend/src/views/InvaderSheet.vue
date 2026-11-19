@@ -2,7 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-import { invadersApi } from '@/api/endpoints'
+import { invadersApi, outingsApi } from '@/api/endpoints'
 import { type InvaderDetail, STATUS_LABELS } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
@@ -16,12 +16,14 @@ import { useFormErrors } from '@/composables/useFormErrors'
 import { isIssInvader, useIssPosition } from '@/composables/useIssPosition'
 import { useFlashSyncFailing } from '@/composables/useFlashSync'
 import { useAuthStore } from '@/stores/auth'
+import { useOutingStore } from '@/stores/outing'
 import { useInvadersStore } from '@/stores/invaders'
 import { usePlacesStore } from '@/stores/places'
 
 const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
+const outingStore = useOutingStore()
 const flashSyncFailing = useFlashSyncFailing()
 // With a working Flash Invaders sync, flashes come from the app only, unless the member
 // kept the manual buttons (option in the team screen).
@@ -104,6 +106,22 @@ async function run(action: () => Promise<InvaderDetail | void>) {
 }
 
 // No date asked: the backend records today's, then the Flash Invaders sync sets the app's.
+// Outing shown on the map: this invader can be added to or removed from its route.
+const inOuting = computed(() => invader.value !== null && outingStore.stopIds.has(invader.value.id))
+
+function toggleOutingStop() {
+  const current = outingStore.active
+  if (!current || !invader.value) return
+  const ids = current.stops.map((stop) => stop.invader.id)
+  const invaderId = invader.value.id
+  run(async () => {
+    const updated = await outingsApi.update(current.id, {
+      stop_ids: inOuting.value ? ids.filter((id) => id !== invaderId) : [...ids, invaderId],
+    })
+    outingStore.update(updated)
+  })
+}
+
 const flash = () => run(() => invadersApi.flash(invader.value!.id))
 const unflash = () => run(() => invadersApi.unflash(invader.value!.id))
 
@@ -225,6 +243,17 @@ async function remove() {
             <AppIcon name="search" :size="18" /> Google
           </a>
         </div>
+
+        <button
+          v-if="mapContext && outingStore.active"
+          type="button"
+          class="btn btn--block"
+          :disabled="busy"
+          @click="toggleOutingStop"
+        >
+          <AppIcon :name="inOuting ? 'close' : 'flag'" :size="18" />
+          {{ inOuting ? `Retirer de « ${outingStore.active.name} »` : `Ajouter à « ${outingStore.active.name} »` }}
+        </button>
 
         <RouterLink
           v-if="!mapContext"

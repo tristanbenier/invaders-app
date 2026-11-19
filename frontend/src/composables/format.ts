@@ -11,3 +11,11 @@ export function today() {
   const offset = now.getTimezoneOffset() * 60_000
   return new Date(now.getTime() - offset).toISOString().slice(0, 10)
 }
+
+/** 95 → "1 h 35", 45 → "45 min". */
+export function formatDuration(minutes: number) {
+  const hours = Math.floor(minutes / 60)
+  const rest = Math.round(minutes % 60)
+  if (!hours) return `${rest} min`
+  return rest ? `${hours} h ${String(rest).padStart(2, '0')}` : `${hours} h`
+}
