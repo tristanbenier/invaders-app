@@ -17,6 +17,7 @@ import { type LatLng, MAP_CONTEXT } from '@/composables/mapContext'
 import { useGeolocation } from '@/composables/useGeolocation'
 import { isIssInvader, useIssPosition } from '@/composables/useIssPosition'
 import { useLocalStorage } from '@/composables/useLocalStorage'
+import { basemapStyle } from '@/lib/basemap'
 import { useAuthStore } from '@/stores/auth'
 import { useFiltersStore } from '@/stores/filters'
 import { useInvadersStore } from '@/stores/invaders'
@@ -24,15 +25,6 @@ import { useOutingStore } from '@/stores/outing'
 import { usePlacesStore } from '@/stores/places'
 import { useTeamStore } from '@/stores/team'
 
-// Vector basemap drawn by MapLibre from OpenFreeMap's OpenStreetMap tiles, relayed and
-// cached by Django under /tiles/ (style, tiles, fonts and sprites: no third-party origin).
-// Our own "day" and "night" styles (backend basemap_styles.py). The attribution
-// (OpenFreeMap, OpenMapTiles, OpenStreetMap) comes from the tile set.
-const BASEMAP_STYLES = { light: 'day', dark: 'night' } as const
-
-function basemapStyle(theme: keyof typeof BASEMAP_STYLES) {
-  return new URL(`/tiles/styles/${BASEMAP_STYLES[theme]}`, window.location.origin).href
-}
 const DEFAULT_VIEW = { center: [48.8566, 2.3522] as L.LatLngTuple, zoom: 13 }
 // Last map view, restored on reload (per browser, nothing to sync).
 interface SavedView {

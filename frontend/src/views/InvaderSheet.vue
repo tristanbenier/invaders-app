@@ -9,6 +9,7 @@ import BottomSheet from '@/components/BottomSheet.vue'
 import FieldErrors from '@/components/FieldErrors.vue'
 import InvaderHistory from '@/components/InvaderHistory.vue'
 import InvaderPhoto from '@/components/InvaderPhoto.vue'
+import MiniMap from '@/components/MiniMap.vue'
 import { directionsTo } from '@/composables/directions'
 import { formatDate } from '@/composables/format'
 import { useOptionalMapContext } from '@/composables/mapContext'
@@ -149,7 +150,11 @@ async function remove() {
 </script>
 
 <template>
-  <BottomSheet :title="invader?.name ?? 'Invader'" :modal="!mapContext" @close="router.push(closeRoute)">
+  <BottomSheet :title="invader ? `${invader.name} • ${invader.points} PTS` : 'Invader'" :modal="!mapContext" @close="router.push(closeRoute)">
+    <template #header>
+      <h2 class="detail__title">{{ invader ? `${invader.name} • ${invader.points} PTS` : 'Invader' }}</h2>
+      <span v-if="invader" class="status" :class="`status--${invader.status}`">{{ STATUS_LABELS[invader.status] }}</span>
+    </template>
     <p v-if="loadError" class="errors">{{ loadError }}</p>
     <p v-else-if="!invader" class="muted">Chargement…</p>
 
@@ -161,16 +166,6 @@ async function remove() {
           <dt>Ville</dt>
           <dd>{{ city?.name ?? '—' }}<template v-if="country">, {{ country.name }}</template></dd>
         </div>
-        <div>
-          <dt>Points</dt>
-          <dd>{{ invader.points }}</dd>
-        </div>
-        <div>
-          <dt>Statut</dt>
-          <dd>
-            <span class="status" :class="`status--${invader.status}`">{{ STATUS_LABELS[invader.status] }}</span>
-          </dd>
-        </div>
         <div v-if="onIss" class="detail__wide">
           <dt>Position en temps réel</dt>
           <dd v-if="iss.position.value" class="detail__coords">
@@ -180,11 +175,7 @@ async function remove() {
           </dd>
           <dd v-else class="muted">{{ iss.error.value ?? 'Recherche de la station spatiale…' }}</dd>
         </div>
-        <div v-else>
-          <dt>Coordonnées</dt>
-          <dd class="detail__coords">{{ invader.lat.toFixed(5) }}, {{ invader.lng.toFixed(5) }}</dd>
-        </div>
-        <div v-if="address.length" class="detail__wide">
+        <div v-if="address.length">
           <dt>Adresse</dt>
           <dd>
             <span v-for="line in address" :key="line" class="detail__address-line">{{ line }}</span>
@@ -195,6 +186,9 @@ async function remove() {
           <dd class="detail__comment">{{ invader.comment }}</dd>
         </div>
       </dl>
+
+      <!-- Gallery only: the map screen already shows where the invader is. -->
+      <MiniMap v-if="!mapContext && !onIss" :lat="invader.lat" :lng="invader.lng" :label="invader.name" />
 
       <section v-if="invader.my_flashed_at || manualFlash" class="detail__flash card">
         <template v-if="invader.my_flashed_at">
@@ -296,6 +290,13 @@ async function remove() {
   width: min(100%, 320px);
   align-self: center;
   border-radius: 10px;
+}
+
+/* Same look as BottomSheet's own title, which this header slot replaces. */
+.detail__title {
+  flex: 1;
+  min-width: 0;
+  font-size: 1.15rem;
 }
 
 .detail__facts {
