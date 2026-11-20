@@ -74,11 +74,6 @@ const breakdownRows = computed<BreakdownRow[]>(() => {
 const hiddenRows = computed(() =>
   breakdown.value === 'city' ? (mine.value?.by_city.length ?? 0) - visibleCities.value.length : 0,
 )
-
-const myRank = computed(() => {
-  const index = team.value?.ranking.findIndex((row) => row.user.id === auth.me?.id) ?? -1
-  return index === -1 ? null : index + 1
-})
 </script>
 
 <template>
@@ -99,16 +94,16 @@ const myRank = computed(() => {
 
       <div class="stats__tiles">
         <div class="card stats__tile">
+          <span class="stats__label">Flash points</span>
+          <span class="stats__value">{{ numberFormat.format(mine.flashed_points) }}</span>
+        </div>
+        <div class="card stats__tile">
           <span class="stats__label">Flashs</span>
           <span class="stats__value">{{ numberFormat.format(mine.flashes) }}<small class="muted"> / {{ numberFormat.format(mine.team_invaders) }}</small></span>
         </div>
         <div class="card stats__tile">
           <span class="stats__label">Villes ouvertes</span>
           <span class="stats__value">{{ mine.cities }}<small class="muted"> / {{ numberFormat.format(mine.team_cities) }}</small></span>
-        </div>
-        <div class="card stats__tile">
-          <span class="stats__label">Classement équipe</span>
-          <span class="stats__value">{{ myRank ?? '—' }}<small><sup>{{ myRank === 1 ? 'er' : 'e' }}</sup></small><small v-if="myRank" class="muted"> / {{ team.ranking.length }}</small></span>
         </div>
       </div>
 
@@ -272,7 +267,8 @@ const myRank = computed(() => {
 .stats__tiles {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  /* Same spacing as between the layout blocks. */
+  gap: 16px;
 }
 
 .stats__tile {

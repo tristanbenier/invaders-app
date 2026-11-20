@@ -145,6 +145,8 @@ export interface MyStats {
   points: number
   /** `points` is the Flash Invaders app's score (synced account), not the sum of the flashes here. */
   points_from_app: boolean
+  /** Sum of the points of the flashed invaders on the team map. */
+  flashed_points: number
   flashes: number
   cities: number
   team_invaders: number

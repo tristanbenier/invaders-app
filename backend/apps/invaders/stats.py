@@ -82,6 +82,8 @@ class MyStatsView(APIView):
             {
                 "points": cumulative_points if app_score is None else app_score,
                 "points_from_app": app_score is not None,
+                # Sum of the points of the flashed invaders on the team map.
+                "flashed_points": cumulative_points,
                 "flashes": cumulative_flashes,
                 "cities": sum(1 for row in by_city if row["flashed"]),
                 "team_invaders": Invader.objects.filter(team=user.team).count(),
