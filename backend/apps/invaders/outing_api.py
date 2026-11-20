@@ -11,17 +11,12 @@ from rest_framework.response import Response
 from apps.accounts.models import User
 
 from . import outings
-from .models import City, Flash, Invader, Outing, OutingStop
+from .models import Flash, Invader, Outing, OutingStop
 
 
 class MemberField(serializers.PrimaryKeyRelatedField):
     def get_queryset(self):
         return User.objects.filter(team=self.context["request"].user.team, is_active=True)
-
-
-class CityField(serializers.PrimaryKeyRelatedField):
-    def get_queryset(self):
-        return City.objects.filter(team=self.context["request"].user.team)
 
 
 class InvaderField(serializers.PrimaryKeyRelatedField):
@@ -35,7 +30,6 @@ def _member(user):
 
 class OutingSerializer(serializers.ModelSerializer):
     participants = MemberField(many=True)
-    city = CityField(allow_null=True, required=False)
     # Write: the invaders in visiting order (edit, reorder, remove, add). Read: see `stops`.
     stop_ids = InvaderField(many=True, write_only=True, required=False)
     created_by = serializers.SerializerMethodField()
@@ -51,7 +45,6 @@ class OutingSerializer(serializers.ModelSerializer):
             "created_by",
             "participants",
             "participant_names",
-            "city",
             "mode",
             "duration_minutes",
             "start_lat",
@@ -124,7 +117,7 @@ def replan(outing):
         (float(outing.end_lat), float(outing.end_lng)),
         outing.mode,
         outing.duration_minutes,
-        outings.candidates(outing.team, participants, outing.city),
+        outings.candidates(outing.team, participants),
     )
     set_stops(outing, route)
 

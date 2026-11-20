@@ -196,7 +196,6 @@ export interface Outing {
   created_by: UserSummary | null
   participants: number[]
   participant_names: UserSummary[]
-  city: number | null
   mode: TransportMode
   duration_minutes: number
   start_lat: number
@@ -215,6 +214,6 @@ export interface Outing {
 
 export type OutingInput = Pick<
   Outing,
-  'name' | 'participants' | 'city' | 'mode' | 'duration_minutes' | 'start_lat' | 'start_lng' | 'start_label' | 'is_loop'
+  'name' | 'participants' | 'mode' | 'duration_minutes' | 'start_lat' | 'start_lng' | 'start_label' | 'is_loop'
 > &
   Partial<Pick<Outing, 'end_lat' | 'end_lng' | 'end_label'>>

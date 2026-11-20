@@ -11,7 +11,6 @@ import { formatDate, formatDuration, today } from '@/composables/format'
 import { useFormErrors } from '@/composables/useFormErrors'
 import { useAuthStore } from '@/stores/auth'
 import { useOutingStore } from '@/stores/outing'
-import { usePlacesStore } from '@/stores/places'
 import { useTeamStore } from '@/stores/team'
 
 const DURATIONS = [30, 45, 60, 90, 120, 180, 240, 360, 480]
@@ -21,7 +20,6 @@ const route = useRoute()
 const router = useRouter()
 const auth = useAuthStore()
 const team = useTeamStore()
-const places = usePlacesStore()
 const outing = useOutingStore()
 const { errors, capture, clear } = useFormErrors()
 
@@ -29,7 +27,6 @@ const editedId = computed(() => (route.params.id ? Number(route.params.id) : nul
 const form = reactive({
   name: `Sortie du ${formatDate(today())}`,
   participants: auth.me ? [auth.me.id] : ([] as number[]),
-  city: null as number | null,
   mode: 'walk' as TransportMode,
   duration_minutes: 120,
   is_loop: true,
@@ -46,7 +43,6 @@ onMounted(async () => {
     Object.assign(form, {
       name: current.name,
       participants: current.participants,
-      city: current.city,
       mode: current.mode,
       duration_minutes: current.duration_minutes,
       is_loop: current.is_loop,
@@ -138,21 +134,12 @@ function close() {
         </div>
       </fieldset>
 
-      <div class="outing-form__row">
-        <label class="field">
-          <span>Durée</span>
-          <select v-model="form.duration_minutes" class="input">
-            <option v-for="minutes in DURATIONS" :key="minutes" :value="minutes">{{ formatDuration(minutes) }}</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Ville</span>
-          <select v-model="form.city" class="input">
-            <option :value="null">Toutes</option>
-            <option v-for="city in places.cities" :key="city.id" :value="city.id">{{ city.name }}</option>
-          </select>
-        </label>
-      </div>
+      <label class="field">
+        <span>Durée</span>
+        <select v-model="form.duration_minutes" class="input">
+          <option v-for="minutes in DURATIONS" :key="minutes" :value="minutes">{{ formatDuration(minutes) }}</option>
+        </select>
+      </label>
 
       <PointField v-model="start" legend="Départ" />
 
@@ -197,11 +184,6 @@ function close() {
   gap: 6px;
 }
 
-.outing-form__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
 
 .outing-form__check {
   display: flex;

@@ -174,10 +174,6 @@ class Outing(models.Model):
     participants = models.ManyToManyField(
         settings.AUTH_USER_MODEL, verbose_name="participants", related_name="outings", blank=True
     )
-    # Optional area: only this city's invaders are candidates.
-    city = models.ForeignKey(
-        City, verbose_name="ville", related_name="outings", on_delete=models.SET_NULL, null=True, blank=True
-    )
     mode = models.CharField("moyen de transport", max_length=10, choices=TransportMode.choices)
     duration_minutes = models.PositiveIntegerField(
         "durée (minutes)", validators=[MinValueValidator(10), MaxValueValidator(24 * 60)]

@@ -43,7 +43,7 @@ def estimate(start, points, end, mode):
     return {"distance_km": round(distance, 1), "minutes": round(minutes)}
 
 
-def candidates(team, participants, city=None):
+def candidates(team, participants):
     """Team invaders that none of the participants has flashed and that can still be flashed."""
     queryset = (
         Invader.objects.filter(team=team)
@@ -51,8 +51,6 @@ def candidates(team, participants, city=None):
         .exclude(name__in=SPECIAL_NAMES)
         .exclude(flashes__user__in=participants)
     )
-    if city is not None:
-        queryset = queryset.filter(city=city)
     return list(queryset.only("id", "lat", "lng"))
 
 
