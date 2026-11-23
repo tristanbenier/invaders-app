@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { invadersApi, outingsApi } from '@/api/endpoints'
@@ -12,6 +12,7 @@ import InvaderPhoto from '@/components/InvaderPhoto.vue'
 import MiniMap from '@/components/MiniMap.vue'
 import { directionsTo } from '@/composables/directions'
 import { formatDate } from '@/composables/format'
+import { useGalleryNavigation } from '@/composables/galleryNavigation'
 import { useOptionalMapContext } from '@/composables/mapContext'
 import { useFormErrors } from '@/composables/useFormErrors'
 import { isIssInvader, useIssPosition } from '@/composables/useIssPosition'
@@ -62,7 +63,7 @@ const googleImagesUrl = computed(() =>
 )
 
 async function load(id: number) {
-  invader.value = null
+  // Going to the previous / next invader keeps the current one on screen until the new one arrives.
   loadError.value = null
   clear()
   try {
@@ -71,6 +72,7 @@ async function load(id: number) {
     if (onIss.value) focusIss()
     else mapContext?.focus(invader.value)
   } catch (error) {
+    invader.value = null
     loadError.value = error instanceof Error ? error.message : String(error)
   }
 }
@@ -89,6 +91,58 @@ watch(
   (id) => id && load(id),
   { immediate: true },
 )
+
+// Gallery only: previous / next invader in the gallery's list (filters, search and ordering applied).
+const gallery = useGalleryNavigation()
+const galleryIndex = computed(() => gallery?.items.value.findIndex((item) => item.id === Number(route.params.id)) ?? -1)
+const hasPrevious = computed(() => galleryIndex.value > 0)
+const hasNext = computed(
+  () => !!gallery && galleryIndex.value !== -1 && (galleryIndex.value < gallery.items.value.length - 1 || gallery.hasMore.value),
+)
+
+async function step(delta: -1 | 1) {
+  if (!gallery || galleryIndex.value === -1) return
+  const target = galleryIndex.value + delta
+  if (target < 0) return
+  // Past the last loaded invader: fetch the next page of the list first.
+  if (target >= gallery.items.value.length) {
+    if (!gallery.hasMore.value) return
+    await gallery.loadMore()
+  }
+  const next = gallery.items.value[target]
+  if (next) router.replace({ name: 'gallery-invader', params: { id: next.id } })
+}
+
+function onKeydown(event: KeyboardEvent) {
+  if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return
+  const target = event.target as HTMLElement | null
+  if (target?.closest('input, textarea, select, [contenteditable="true"]')) return
+  if (event.key === 'ArrowLeft') step(-1)
+  else if (event.key === 'ArrowRight') step(1)
+}
+
+// Mobile: a horizontal swipe on the sheet (left = next, right = previous).
+const SWIPE_MIN_PX = 60
+let touchStart: { x: number; y: number } | null = null
+
+function onTouchStart(event: TouchEvent) {
+  const touch = event.touches[0]
+  touchStart = event.touches.length === 1 && touch ? { x: touch.clientX, y: touch.clientY } : null
+}
+
+function onTouchEnd(event: TouchEvent) {
+  const touch = event.changedTouches[0]
+  if (!touchStart || !touch) return
+  const dx = touch.clientX - touchStart.x
+  const dy = touch.clientY - touchStart.y
+  touchStart = null
+  // Mostly horizontal, so that scrolling the sheet never changes invader.
+  if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) < 2 * Math.abs(dy)) return
+  step(dx < 0 ? 1 : -1)
+}
+
+onMounted(() => gallery && document.addEventListener('keydown', onKeydown))
+onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 async function run(action: () => Promise<InvaderDetail | void>) {
   clear()
@@ -158,7 +212,16 @@ async function remove() {
     <p v-if="loadError" class="errors">{{ loadError }}</p>
     <p v-else-if="!invader" class="muted">Chargement…</p>
 
-    <div v-else class="detail">
+    <div v-else class="detail" @touchstart.passive="onTouchStart" @touchend="onTouchEnd">
+      <nav v-if="gallery && galleryIndex !== -1" class="detail__nav" aria-label="Invaders de la galerie">
+        <button type="button" class="btn" :disabled="!hasPrevious" title="Flèche gauche" @click="step(-1)">
+          <AppIcon name="back" :size="18" /> Précédent
+        </button>
+        <span class="muted">{{ galleryIndex + 1 }} / {{ gallery.count.value ?? gallery.items.value.length }}</span>
+        <button type="button" class="btn" :disabled="!hasNext" title="Flèche droite" @click="step(1)">
+          Suivant <AppIcon name="forward" :size="18" />
+        </button>
+      </nav>
       <InvaderPhoto v-if="invader.image" :src="invader.image" :alt="`Photo de ${invader.name}`" class="detail__image" />
 
       <dl class="detail__facts">
@@ -297,6 +360,20 @@ async function remove() {
   flex: 1;
   min-width: 0;
   font-size: 1.15rem;
+}
+
+/* Buttons for mouse and keyboard users; touch screens swipe instead. */
+.detail__nav {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .detail__nav {
+    display: flex;
+  }
 }
 
 .detail__facts {

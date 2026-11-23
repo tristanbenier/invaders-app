@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
 
 import { invadersApi } from '@/api/endpoints'
 import { type Invader, STATUS_LABELS } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import FilterPanel from '@/components/FilterPanel.vue'
 import InvaderPhoto from '@/components/InvaderPhoto.vue'
+import { GALLERY_NAVIGATION } from '@/composables/galleryNavigation'
 import { useFiltersStore } from '@/stores/filters'
 import { useInvadersStore } from '@/stores/invaders'
 import { usePlacesStore } from '@/stores/places'
@@ -89,6 +90,8 @@ function reset() {
 }
 
 watch(() => [filters.query, ordering.value], reset, { deep: true })
+// The invader modal moves through this same list.
+provide(GALLERY_NAVIGATION, { items, count, hasMore, loadMore })
 // Reflect flashes, edits and deletions made in the modal without reloading the list.
 watch(
   () => invadersStore.lastChange,

@@ -16,6 +16,7 @@ const PATHS = {
   copy: 'M9 9h11v11H9V9Zm-4 6H4V4h11v1',
   trash: 'M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6',
   back: 'M15 18 9 12l6-6',
+  forward: 'm9 18 6-6-6-6',
   grid: 'M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z',
   chart: 'M4 20V10m6 10V4m6 16v-7m4 7H2',
   rotate: 'M21 12a9 9 0 1 1-3-6.7L21 8m0-5v5h-5',
