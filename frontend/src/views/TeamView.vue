@@ -6,6 +6,7 @@ import { teamApi } from '@/api/endpoints'
 import type { Invitation, Member } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import FieldErrors from '@/components/FieldErrors.vue'
+import FlashSyncCard from '@/components/FlashSyncCard.vue'
 import { formatDate } from '@/composables/format'
 import { useFormErrors } from '@/composables/useFormErrors'
 import { useAuthStore } from '@/stores/auth'
@@ -95,6 +96,8 @@ const logout = () =>
     </header>
 
     <FieldErrors :messages="[...(errors._ ?? []), ...(errors.email ?? [])]" />
+
+    <FlashSyncCard />
 
     <section class="card team__section">
       <h2>{{ teamStore.team?.name ?? auth.me?.team.name }} ({{ teamStore.team?.members.length ?? 0 }})</h2>

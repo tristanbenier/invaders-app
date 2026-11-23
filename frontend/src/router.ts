@@ -42,7 +42,6 @@ export const router = createRouter({
     },
     { path: '/stats', name: 'stats', component: () => import('./views/StatsView.vue') },
     { path: '/team', name: 'team', component: () => import('./views/TeamView.vue') },
-    { path: '/settings', name: 'settings', component: () => import('./views/SettingsView.vue') },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })
