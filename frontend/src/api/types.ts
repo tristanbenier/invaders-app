@@ -103,23 +103,6 @@ export interface InvaderDetail extends Invader {
   flashers: Flasher[]
 }
 
-export type HistoryAction = 'created' | 'updated' | 'imported'
-
-export interface HistoryChange<T = unknown> {
-  old: T
-  new: T
-}
-
-export interface HistoryEntry {
-  id: number
-  user: UserSummary | null
-  action: HistoryAction
-  changes: Partial<
-    Record<'name' | 'lat' | 'lng' | 'points' | 'status' | 'image' | 'address1' | 'address2' | 'zip' | 'comment', HistoryChange>
-  >
-  created_at: string
-}
-
 export interface CityProgress {
   city: { id: number; name: string; prefix: string }
   country: string

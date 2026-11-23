@@ -51,15 +51,17 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
   z-index: 1000;
 }
 
+/* Close button at the top right, even beside a multi-line header (invader sheet). */
 .sheet__header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 12px 12px 8px 16px;
 }
 
 .sheet__title {
   flex: 1;
+  align-self: center;
   font-size: 1.15rem;
 }
 

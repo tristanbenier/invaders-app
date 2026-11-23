@@ -7,7 +7,6 @@ import { type InvaderDetail, STATUS_LABELS } from '@/api/types'
 import AppIcon from '@/components/AppIcon.vue'
 import BottomSheet from '@/components/BottomSheet.vue'
 import FieldErrors from '@/components/FieldErrors.vue'
-import InvaderHistory from '@/components/InvaderHistory.vue'
 import InvaderPhoto from '@/components/InvaderPhoto.vue'
 import MiniMap from '@/components/MiniMap.vue'
 import { directionsTo } from '@/composables/directions'
@@ -50,7 +49,7 @@ const address = computed(() => {
   // Only show the locality when there is an actual street address or zip code.
   return [address1, address2, address1 || address2 || zip ? locality : ''].filter(Boolean)
 })
-// SPACE2ISS is on the ISS: live position instead of a fixed spot, no directions, no move.
+// SPACE2ISS is on the ISS: live position instead of a fixed spot, no directions.
 const onIss = computed(() => invader.value !== null && isIssInvader(invader.value))
 const iss = useIssPosition(onIss)
 const directions = computed(() => (invader.value && !onIss.value ? directionsTo(invader.value) : null))
@@ -180,18 +179,6 @@ function toggleOutingStop() {
 const flash = () => run(() => invadersApi.flash(invader.value!.id))
 const unflash = () => run(() => invadersApi.unflash(invader.value!.id))
 
-async function move() {
-  if (!mapContext) return
-  const current = invader.value!
-  const point = await mapContext.pickLocation(current, `Faites glisser ${current.name} à sa nouvelle position.`)
-  if (!point) return
-  await run(async () => {
-    await invadersApi.update(current.id, { lat: point.lat, lng: point.lng })
-    return invadersApi.get(current.id)
-  })
-  mapContext.focus(point)
-}
-
 async function remove() {
   const current = invader.value!
   if (!window.confirm(`Supprimer définitivement ${current.name} ? Les flashs associés seront aussi supprimés.`)) return
@@ -206,74 +193,111 @@ async function remove() {
 <template>
   <BottomSheet :title="invader ? `${invader.name} • ${invader.points} PTS` : 'Invader'" :modal="!mapContext" @close="router.push(closeRoute)">
     <template #header>
-      <h2 class="detail__title">{{ invader ? `${invader.name} • ${invader.points} PTS` : 'Invader' }}</h2>
-      <span v-if="invader" class="status" :class="`status--${invader.status}`">{{ STATUS_LABELS[invader.status] }}</span>
+      <div class="detail__head">
+        <h2 class="detail__title">{{ invader ? `${invader.name} • ${invader.points} PTS` : 'Invader' }}</h2>
+        <template v-if="invader">
+          <p class="muted detail__place">{{ city?.name ?? '—' }}<template v-if="country">, {{ country.name }}</template></p>
+          <div class="detail__badges">
+            <span class="status" :class="`status--${invader.status}`">{{ STATUS_LABELS[invader.status] }}</span>
+            <span v-if="invader.my_flashed_at" class="detail__flashed">
+              <AppIcon name="check" :size="16" /> Flashé le {{ formatDate(invader.my_flashed_at) }}
+            </span>
+            <span v-else class="muted detail__not-flashed">Pas encore flashé</span>
+          </div>
+        </template>
+      </div>
     </template>
     <p v-if="loadError" class="errors">{{ loadError }}</p>
     <p v-else-if="!invader" class="muted">Chargement…</p>
 
     <div v-else class="detail" @touchstart.passive="onTouchStart" @touchend="onTouchEnd">
       <nav v-if="gallery && galleryIndex !== -1" class="detail__nav" aria-label="Invaders de la galerie">
-        <button type="button" class="btn" :disabled="!hasPrevious" title="Flèche gauche" @click="step(-1)">
-          <AppIcon name="back" :size="18" /> Précédent
+        <button type="button" class="btn detail__nav-btn" :disabled="!hasPrevious" title="Flèche gauche" @click="step(-1)">
+          <AppIcon name="back" :size="16" /> Précédent
         </button>
         <span class="muted">{{ galleryIndex + 1 }} / {{ gallery.count.value ?? gallery.items.value.length }}</span>
-        <button type="button" class="btn" :disabled="!hasNext" title="Flèche droite" @click="step(1)">
-          Suivant <AppIcon name="forward" :size="18" />
+        <button type="button" class="btn detail__nav-btn" :disabled="!hasNext" title="Flèche droite" @click="step(1)">
+          Suivant <AppIcon name="forward" :size="16" />
         </button>
       </nav>
-      <InvaderPhoto v-if="invader.image" :src="invader.image" :alt="`Photo de ${invader.name}`" class="detail__image" />
 
-      <dl class="detail__facts">
-        <div>
-          <dt>Ville</dt>
-          <dd>{{ city?.name ?? '—' }}<template v-if="country">, {{ country.name }}</template></dd>
-        </div>
-        <div v-if="onIss" class="detail__wide">
-          <dt>Position en temps réel</dt>
-          <dd v-if="iss.position.value" class="detail__coords">
+      <section v-if="invader.image" class="card detail__card">
+        <h3 class="detail__card-title"><span class="detail__card-icon"><AppIcon name="image" :size="18" /></span> Photo</h3>
+        <InvaderPhoto :src="invader.image" :alt="`Photo de ${invader.name}`" class="detail__image" />
+      </section>
+
+      <section class="card detail__card">
+        <h3 class="detail__card-title"><span class="detail__card-icon"><AppIcon name="pin" :size="18" /></span> Position</h3>
+        <template v-if="onIss">
+          <p v-if="iss.position.value" class="detail__coords">
             {{ iss.position.value.lat.toFixed(2) }}, {{ iss.position.value.lng.toFixed(2) }} ·
             {{ iss.position.value.altitude_km }} km d'altitude ·
             {{ iss.position.value.velocity_kmh.toLocaleString('fr-FR') }} km/h
-          </dd>
-          <dd v-else class="muted">{{ iss.error.value ?? 'Recherche de la station spatiale…' }}</dd>
-        </div>
-        <div v-if="address.length">
-          <dt>Adresse</dt>
-          <dd>
-            <span v-for="line in address" :key="line" class="detail__address-line">{{ line }}</span>
-          </dd>
-        </div>
-        <div v-if="invader.comment" class="detail__wide">
-          <dt>Commentaire</dt>
-          <dd class="detail__comment">{{ invader.comment }}</dd>
-        </div>
-      </dl>
-
-      <!-- Gallery only: the map screen already shows where the invader is. -->
-      <MiniMap v-if="!mapContext && !onIss" :lat="invader.lat" :lng="invader.lng" :label="invader.name" />
-
-      <section v-if="invader.my_flashed_at || manualFlash" class="detail__flash card">
-        <template v-if="invader.my_flashed_at">
-          <p class="detail__flashed">
-            <AppIcon name="check" :size="18" />
-            Flashé le {{ formatDate(invader.my_flashed_at) }}
           </p>
-          <button v-if="manualFlash" type="button" class="btn btn--block" :disabled="busy" @click="unflash">
-            Annuler mon flash
-          </button>
+          <p v-else class="muted">{{ iss.error.value ?? 'Recherche de la station spatiale…' }}</p>
         </template>
-        <button v-else-if="manualFlash" type="button" class="btn btn--primary btn--block" :disabled="busy" @click="flash">
-          Je l'ai flashé
-        </button>
+        <p v-else-if="address.length" class="detail__address">
+          <span v-for="line in address" :key="line" class="detail__address-line">{{ line }}</span>
+        </p>
+        <p v-if="invader.comment" class="detail__comment">{{ invader.comment }}</p>
+        <!-- Gallery only: the map screen already shows where the invader is. -->
+        <MiniMap v-if="!mapContext && !onIss" :lat="invader.lat" :lng="invader.lng" :label="invader.name" />
+      </section>
+
+      <section class="card detail__card">
+        <h3 class="detail__card-title"><span class="detail__card-icon"><AppIcon name="flag" :size="18" /></span> Actions</h3>
+        <div class="detail__actions">
+          <template v-if="manualFlash">
+            <button v-if="invader.my_flashed_at" type="button" class="btn detail__action" :disabled="busy" @click="unflash">
+              <AppIcon name="close" /> <span>Déflasher</span>
+            </button>
+            <button v-else type="button" class="btn btn--primary detail__action" :disabled="busy" @click="flash">
+              <AppIcon name="camera" /> <span>Flasher</span>
+            </button>
+          </template>
+          <a
+            v-if="directions"
+            :href="directions.url"
+            target="_blank"
+            rel="noopener"
+            class="btn detail__action"
+            :title="directions.app === 'apple' ? 'Ouvrir dans Plans' : 'Ouvrir dans Google Maps'"
+          >
+            <AppIcon name="route" /> <span>Itinéraire</span>
+          </a>
+          <RouterLink v-if="!mapContext" :to="{ name: 'invader', params: { id: invader.id } }" class="btn detail__action">
+            <AppIcon name="map" /> <span>Carte</span>
+          </RouterLink>
+          <a v-if="googleImagesUrl" :href="googleImagesUrl" target="_blank" rel="noopener" class="btn detail__action" title="Rechercher dans Google Images">
+            <AppIcon name="search" /> <span>Google</span>
+          </a>
+          <button
+            v-if="mapContext && outingStore.active"
+            type="button"
+            class="btn detail__action"
+            :disabled="busy"
+            :title="inOuting ? `Retirer de « ${outingStore.active.name} »` : `Ajouter à « ${outingStore.active.name} »`"
+            @click="toggleOutingStop"
+          >
+            <AppIcon :name="inOuting ? 'close' : 'flag'" /> <span>{{ inOuting ? 'Hors sortie' : 'Sortie' }}</span>
+          </button>
+          <RouterLink :to="{ name: 'invader-edit', params: { id: invader.id } }" class="btn detail__action">
+            <AppIcon name="edit" /> <span>Modifier</span>
+          </RouterLink>
+          <button v-if="auth.isAdmin" type="button" class="btn btn--danger detail__action" :disabled="busy" @click="remove">
+            <AppIcon name="trash" /> <span>Supprimer</span>
+          </button>
+        </div>
         <p v-if="auth.me?.flash_sync_enabled && flashSyncFailing" class="muted">
           La synchro Flash Invaders ne répond pas : vous pouvez flasher à la main en attendant.
         </p>
         <FieldErrors :messages="[...(errors._ ?? []), ...(errors.flashed_at ?? [])]" />
       </section>
 
-      <section>
-        <h3 class="detail__subtitle">Flashé par l'équipe ({{ invader.flashers.length }})</h3>
+      <section v-if="invader.flashers.length" class="card detail__card">
+        <h3 class="detail__card-title">
+          <span class="detail__card-icon"><AppIcon name="team" :size="18" /></span> Flashé par ({{ invader.flashers.length }})
+        </h3>
         <p v-if="!invader.flashers.length" class="muted">Personne pour l'instant.</p>
         <ul v-else class="detail__flashers">
           <li v-for="flasher in invader.flashers" :key="flasher.user.id">
@@ -282,62 +306,6 @@ async function remove() {
           </li>
         </ul>
       </section>
-
-      <!-- One block: the button rows keep the same 8px spacing between them. -->
-      <div class="detail__buttons">
-        <div class="detail__links">
-          <a
-            v-if="directions"
-            :href="directions.url"
-            target="_blank"
-            rel="noopener"
-            class="btn"
-            :title="directions.app === 'apple' ? 'Ouvrir dans Plans' : 'Ouvrir dans Google Maps'"
-          >
-            <AppIcon name="route" :size="18" /> Itinéraire
-          </a>
-          <a v-if="googleImagesUrl" :href="googleImagesUrl" target="_blank" rel="noopener" class="btn" title="Rechercher dans Google Images">
-            <AppIcon name="search" :size="18" /> Google
-          </a>
-        </div>
-
-        <button
-          v-if="mapContext && outingStore.active"
-          type="button"
-          class="btn btn--block"
-          :disabled="busy"
-          @click="toggleOutingStop"
-        >
-          <AppIcon :name="inOuting ? 'close' : 'flag'" :size="18" />
-          {{ inOuting ? `Retirer de « ${outingStore.active.name} »` : `Ajouter à « ${outingStore.active.name} »` }}
-        </button>
-
-        <RouterLink
-          v-if="!mapContext"
-          :to="{ name: 'invader', params: { id: invader.id } }"
-          class="btn btn--primary btn--block"
-        >
-          <AppIcon name="map" :size="18" /> Voir sur la carte
-        </RouterLink>
-
-        <div class="detail__actions">
-          <RouterLink :to="{ name: 'invader-edit', params: { id: invader.id } }" class="btn">
-            <AppIcon name="edit" :size="18" /> Modifier
-          </RouterLink>
-          <button v-if="mapContext && !onIss" type="button" class="btn" :disabled="busy" @click="move">
-            <AppIcon name="move" :size="18" /> Déplacer
-          </button>
-          <button v-if="auth.isAdmin" type="button" class="btn btn--danger" :disabled="busy" @click="remove">
-            <AppIcon name="trash" :size="18" /> Supprimer
-          </button>
-        </div>
-      </div>
-
-      <InvaderHistory :invader-id="invader.id" :updated-at="invader.updated_at" :lat="invader.lat" :lng="invader.lng" />
-
-      <p v-if="invader.created_by" class="muted detail__meta">
-        Ajouté par {{ invader.created_by.display_name }} le {{ formatDate(invader.created_at) }}
-      </p>
     </div>
   </BottomSheet>
 </template>
@@ -346,20 +314,41 @@ async function remove() {
 .detail {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
-.detail__image {
-  width: min(100%, 320px);
-  align-self: center;
-  border-radius: 10px;
-}
-
-/* Same look as BottomSheet's own title, which this header slot replaces. */
-.detail__title {
+/* Header slot: replaces BottomSheet's own title. */
+.detail__head {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail__title {
   font-size: 1.15rem;
+}
+
+.detail__place {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.detail__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 0.85rem;
+}
+
+.detail__flashed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--flashed);
+  font-weight: 600;
 }
 
 /* Buttons for mouse and keyboard users; touch screens swipe instead. */
@@ -370,30 +359,51 @@ async function remove() {
   gap: 8px;
 }
 
+.detail__nav-btn {
+  min-height: 32px;
+  padding: 4px 10px;
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .detail__nav {
     display: flex;
   }
 }
 
-.detail__facts {
+.detail__card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.detail__card p {
+  margin: 0;
+}
+
+.detail__card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+}
+
+.detail__card-icon {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--accent);
 }
 
-.detail__facts dt {
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.detail__facts dd {
-  margin: 0;
-}
-
-.detail__wide {
-  grid-column: 1 / -1;
+.detail__image {
+  width: min(100%, 320px);
+  align-self: center;
+  border-radius: 10px;
 }
 
 .detail__address-line {
@@ -404,6 +414,8 @@ async function remove() {
 .detail__comment {
   white-space: pre-line;
   overflow-wrap: anywhere;
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 
 .detail__coords {
@@ -432,25 +444,27 @@ async function remove() {
   color: var(--danger);
 }
 
-.detail__flash {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  background: var(--bg);
-}
-
-.detail__flashed {
-  display: flex;
-  align-items: center;
+/* Square-ish tiles: icon above a short label, four per row. */
+.detail__actions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
-  margin: 0;
-  color: var(--flashed);
-  font-weight: 600;
 }
 
-.detail__subtitle {
-  font-size: 0.95rem;
-  margin-bottom: 8px;
+.detail__action {
+  flex-direction: column;
+  gap: 4px;
+  min-height: 64px;
+  padding: 8px 4px;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.detail__action span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .detail__flashers {
@@ -463,31 +477,7 @@ async function remove() {
   display: flex;
   justify-content: space-between;
   padding: 6px 0;
-  border-bottom: 1px solid var(--border);
-}
-
-.detail__buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* Itinéraire and Google side by side, sharing the width (Google alone for SPACE2ISS). */
-.detail__links {
-  display: grid;
-  grid-auto-columns: 1fr;
-  grid-auto-flow: column;
-  gap: 8px;
-}
-
-.detail__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.detail__actions .btn {
-  flex: 1;
+  border-top: 1px solid var(--border);
 }
 
 .detail__meta {

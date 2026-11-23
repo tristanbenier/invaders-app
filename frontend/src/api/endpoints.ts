@@ -1,7 +1,6 @@
 import { api } from './client'
 import type {
   City,
-  HistoryEntry,
   Country,
   Invader,
   InvaderDetail,
@@ -79,7 +78,6 @@ export const invadersApi = {
   search: (search: string) =>
     api<Paginated<Invader>>('/invaders/', { query: { search, page: 1, page_size: 8 } }),
   get: (id: number) => api<InvaderDetail>(`/invaders/${id}/`),
-  history: (id: number) => api<HistoryEntry[]>(`/invaders/${id}/history/`),
   create: (body: FormData) => api<Invader>('/invaders/', { method: 'POST', body }),
   update: (id: number, body: FormData | Partial<Invader>) =>
     api<Invader>(`/invaders/${id}/`, { method: 'PATCH', body }),
