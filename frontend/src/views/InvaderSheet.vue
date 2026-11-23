@@ -246,12 +246,12 @@ async function remove() {
 
       <section class="card detail__card">
         <h3 class="detail__card-title"><span class="detail__card-icon"><AppIcon name="flag" :size="18" /></span> Actions</h3>
-        <div class="detail__actions">
+        <div class="tiles">
           <template v-if="manualFlash">
-            <button v-if="invader.my_flashed_at" type="button" class="btn detail__action" :disabled="busy" @click="unflash">
+            <button v-if="invader.my_flashed_at" type="button" class="btn btn--tile" :disabled="busy" @click="unflash">
               <AppIcon name="close" /> <span>Déflasher</span>
             </button>
-            <button v-else type="button" class="btn btn--primary detail__action" :disabled="busy" @click="flash">
+            <button v-else type="button" class="btn btn--primary btn--tile" :disabled="busy" @click="flash">
               <AppIcon name="camera" /> <span>Flasher</span>
             </button>
           </template>
@@ -260,31 +260,31 @@ async function remove() {
             :href="directions.url"
             target="_blank"
             rel="noopener"
-            class="btn detail__action"
+            class="btn btn--tile"
             :title="directions.app === 'apple' ? 'Ouvrir dans Plans' : 'Ouvrir dans Google Maps'"
           >
             <AppIcon name="route" /> <span>Itinéraire</span>
           </a>
-          <RouterLink v-if="!mapContext" :to="{ name: 'invader', params: { id: invader.id } }" class="btn detail__action">
+          <RouterLink v-if="!mapContext" :to="{ name: 'invader', params: { id: invader.id } }" class="btn btn--tile">
             <AppIcon name="map" /> <span>Carte</span>
           </RouterLink>
-          <a v-if="googleImagesUrl" :href="googleImagesUrl" target="_blank" rel="noopener" class="btn detail__action" title="Rechercher dans Google Images">
+          <a v-if="googleImagesUrl" :href="googleImagesUrl" target="_blank" rel="noopener" class="btn btn--tile" title="Rechercher dans Google Images">
             <AppIcon name="search" /> <span>Google</span>
           </a>
           <button
             v-if="mapContext && outingStore.active"
             type="button"
-            class="btn detail__action"
+            class="btn btn--tile"
             :disabled="busy"
             :title="inOuting ? `Retirer de « ${outingStore.active.name} »` : `Ajouter à « ${outingStore.active.name} »`"
             @click="toggleOutingStop"
           >
             <AppIcon :name="inOuting ? 'close' : 'flag'" /> <span>{{ inOuting ? 'Hors sortie' : 'Sortie' }}</span>
           </button>
-          <RouterLink :to="{ name: 'invader-edit', params: { id: invader.id } }" class="btn detail__action">
+          <RouterLink :to="{ name: 'invader-edit', params: { id: invader.id } }" class="btn btn--tile">
             <AppIcon name="edit" /> <span>Modifier</span>
           </RouterLink>
-          <button v-if="auth.isAdmin" type="button" class="btn btn--danger detail__action" :disabled="busy" @click="remove">
+          <button v-if="auth.isAdmin" type="button" class="btn btn--danger btn--tile" :disabled="busy" @click="remove">
             <AppIcon name="trash" /> <span>Supprimer</span>
           </button>
         </div>
@@ -442,29 +442,6 @@ async function remove() {
 
 .status--destroyed {
   color: var(--danger);
-}
-
-/* Square-ish tiles: icon above a short label, four per row. */
-.detail__actions {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.detail__action {
-  flex-direction: column;
-  gap: 4px;
-  min-height: 64px;
-  padding: 8px 4px;
-  font-size: 0.8rem;
-  text-align: center;
-}
-
-.detail__action span {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .detail__flashers {

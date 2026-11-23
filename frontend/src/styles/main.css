@@ -147,6 +147,29 @@ select.input {
   min-width: 44px;
 }
 
+/* Action tiles (invader and outing sheets): icon above a short label, four per row. */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.btn--tile {
+  flex-direction: column;
+  gap: 4px;
+  min-height: 64px;
+  padding: 8px 4px;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.btn--tile > span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .errors {
   margin: 0;
   padding: 0;

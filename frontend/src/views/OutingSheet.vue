@@ -120,24 +120,18 @@ async function remove() {
         · {{ doneCount }} / {{ outing.stops.length }} flashés
       </p>
 
-      <div class="outing__buttons">
-        <button type="button" class="btn" :class="{ 'btn--primary': !shown }" @click="toggleMap">
-          <AppIcon name="flag" :size="18" />
-          {{ shown ? 'Désactiver' : 'Activer' }}
+      <div class="tiles">
+        <button type="button" class="btn btn--tile" :class="{ 'btn--primary': !shown }" @click="toggleMap">
+          <AppIcon name="flag" /> <span>{{ shown ? 'Désactiver' : 'Activer' }}</span>
         </button>
-        <button type="button" class="btn" @click="share">
-          <AppIcon :name="copied ? 'check' : 'copy'" :size="18" />
-          {{ copied ? 'Lien copié' : 'Partager' }}
+        <button type="button" class="btn btn--tile" @click="share">
+          <AppIcon :name="copied ? 'check' : 'copy'" /> <span>{{ copied ? 'Copié' : 'Partager' }}</span>
         </button>
-      </div>
-      <div class="outing__buttons">
-        <button type="button" class="btn" :disabled="busy" @click="replan">
-          <AppIcon name="rotate" :size="18" />
-          Recalculer
+        <button type="button" class="btn btn--tile" :disabled="busy" @click="replan">
+          <AppIcon name="rotate" /> <span>Recalculer</span>
         </button>
-        <button type="button" class="btn" :disabled="busy || outing.stops.length < 2" @click="optimize">
-          <AppIcon name="route" :size="18" />
-          Optimiser
+        <button type="button" class="btn btn--tile" :disabled="busy || outing.stops.length < 2" @click="optimize">
+          <AppIcon name="route" /> <span>Optimiser</span>
         </button>
       </div>
 
@@ -182,14 +176,12 @@ async function remove() {
       </ol>
       <small class="muted">Ajoutez un invader depuis sa fiche quand la sortie est sur la carte.</small>
 
-      <div class="outing__buttons">
-        <RouterLink :to="{ name: 'outing-edit', params: { id: outing.id } }" class="btn">
-          <AppIcon name="edit" :size="18" />
-          Modifier
+      <div class="tiles">
+        <RouterLink :to="{ name: 'outing-edit', params: { id: outing.id } }" class="btn btn--tile">
+          <AppIcon name="edit" /> <span>Modifier</span>
         </RouterLink>
-        <button v-if="canDelete" type="button" class="btn btn--danger" :disabled="busy" @click="remove">
-          <AppIcon name="trash" :size="18" />
-          Supprimer
+        <button v-if="canDelete" type="button" class="btn btn--danger btn--tile" :disabled="busy" @click="remove">
+          <AppIcon name="trash" /> <span>Supprimer</span>
         </button>
       </div>
     </div>
@@ -209,12 +201,6 @@ async function remove() {
 
 .outing__meta {
   font-size: 0.85rem;
-}
-
-.outing__buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
 }
 
 .outing__stops {
