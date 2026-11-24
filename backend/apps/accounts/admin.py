@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Invitation, Team, User
+from .models import Invitation, PasswordReset, Team, User
 
 
 class MemberInline(admin.TabularInline):
@@ -43,3 +43,15 @@ class InvitationAdmin(admin.ModelAdmin):
     list_display = ["team", "email", "role", "invited_by", "created_at", "expires_at", "used_at", "revoked_at"]
     list_filter = ["team", "role"]
     readonly_fields = ["token", "url", "used_at", "used_by"]
+
+
+@admin.register(PasswordReset)
+class PasswordResetAdmin(admin.ModelAdmin):
+    list_display = ["user", "created_by", "created_at", "expires_at", "used_at", "revoked_at"]
+    list_filter = ["user__team"]
+    # The token is only known by the admin who created the link (hash stored).
+    fields = ["user", "created_by", "created_at", "expires_at", "used_at", "revoked_at"]
+    readonly_fields = fields
+
+    def has_add_permission(self, request):
+        return False

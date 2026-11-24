@@ -9,7 +9,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Invitation, User
+from .models import Invitation, PasswordReset, User
 from .permissions import IsTeamAdmin
 from .serializers import (
     AcceptInvitationSerializer,
@@ -17,6 +17,7 @@ from .serializers import (
     LoginSerializer,
     MeSerializer,
     PublicInvitationSerializer,
+    ResetPasswordSerializer,
     TeamDetailSerializer,
 )
 
@@ -146,3 +147,50 @@ class InvitationRevokeView(APIView):
         invitation.revoked_at = timezone.now()
         invitation.save(update_fields=["revoked_at"])
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PasswordResetCreateView(APIView):
+    """A team admin creates a single-use link for a member who forgot their password (no email sent)."""
+
+    permission_classes = [IsTeamAdmin]
+    throttle_scope = "password_reset"
+
+    def post(self, request, pk):
+        member = get_object_or_404(User, pk=pk, team=request.user.team, is_active=True)
+        reset, token = PasswordReset.issue(member, created_by=request.user)
+        # The clear token is only in this response: the database keeps its hash.
+        return Response(
+            {"url": PasswordReset.url_for(token), "expires_at": reset.expires_at},
+            status=status.HTTP_201_CREATED,
+            headers={"Cache-Control": "no-store"},
+        )
+
+
+@method_decorator(ensure_csrf_cookie, name="dispatch")
+class PublicPasswordResetView(APIView):
+    """Who the link is for, so the page can greet the member."""
+
+    permission_classes = [AllowAny]
+    throttle_scope = "auth"
+
+    def get(self, request, token):
+        reset = PasswordReset.find(token)
+        if reset is None or not reset.is_pending or not reset.user.is_active:
+            raise ValidationError("Ce lien est invalide ou a expiré.")
+        return Response({"display_name": reset.user.display_name, "email": reset.user.email})
+
+
+@method_decorator(csrf_protect, name="dispatch")
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+    throttle_scope = "auth"
+
+    def post(self, request):
+        # Like invitations: an admin testing the link must not switch accounts by accident.
+        if request.user.is_authenticated:
+            raise PermissionDenied("Vous êtes déjà connecté.")
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+        return Response(MeSerializer(user).data)

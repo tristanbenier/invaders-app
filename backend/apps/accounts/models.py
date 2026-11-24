@@ -1,3 +1,4 @@
+import hashlib
 import secrets
 from datetime import timedelta
 
@@ -147,3 +148,67 @@ class Invitation(models.Model):
     @property
     def url(self):
         return f"{settings.FRONTEND_URL.rstrip('/')}/invitation/{self.token}"
+
+
+def hash_token(token):
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def default_reset_expiration():
+    return timezone.now() + timedelta(hours=settings.PASSWORD_RESET_VALIDITY_HOURS)
+
+
+class PasswordResetQuerySet(models.QuerySet):
+    def pending(self):
+        return self.filter(used_at__isnull=True, revoked_at__isnull=True, expires_at__gt=timezone.now())
+
+
+class PasswordReset(models.Model):
+    """Single-use link created by a team admin for a member who forgot their password (no email sent)."""
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, verbose_name="membre", related_name="password_resets", on_delete=models.CASCADE
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="créé par",
+        related_name="created_password_resets",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    # Only the SHA-256 of the token is stored: the link is shown once, to the admin who creates it.
+    token_hash = models.CharField(max_length=64, unique=True, editable=False)
+    created_at = models.DateTimeField("créé le", auto_now_add=True)
+    expires_at = models.DateTimeField("expire le", default=default_reset_expiration)
+    used_at = models.DateTimeField("utilisé le", null=True, blank=True)
+    revoked_at = models.DateTimeField("annulé le", null=True, blank=True)
+
+    objects = PasswordResetQuerySet.as_manager()
+
+    class Meta:
+        verbose_name = "réinitialisation de mot de passe"
+        verbose_name_plural = "réinitialisations de mot de passe"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user} — {self.created_at:%Y-%m-%d %H:%M}"
+
+    @property
+    def is_pending(self):
+        return self.used_at is None and self.revoked_at is None and self.expires_at > timezone.now()
+
+    @classmethod
+    def issue(cls, user, created_by):
+        """Cancels the member's pending links and returns a new one with its clear token."""
+        cls.objects.pending().filter(user=user).update(revoked_at=timezone.now())
+        token = generate_token()
+        return cls.objects.create(user=user, created_by=created_by, token_hash=hash_token(token)), token
+
+    @classmethod
+    def find(cls, token):
+        return cls.objects.select_related("user").filter(token_hash=hash_token(token)).first()
+
+    @staticmethod
+    def url_for(token):
+        return f"{settings.FRONTEND_URL.rstrip('/')}/reset-password/{token}"

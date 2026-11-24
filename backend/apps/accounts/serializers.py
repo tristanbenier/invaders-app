@@ -8,7 +8,7 @@ from rest_framework import serializers
 
 from apps.invaders import flash_invaders
 
-from .models import Invitation, Team, User
+from .models import Invitation, PasswordReset, Team, User
 
 FLASH_INVADERS_UID_PATTERN = re.compile(r"^[0-9A-Za-z-]{8,64}$")
 
@@ -151,4 +151,36 @@ class AcceptInvitationSerializer(serializers.Serializer):
         invitation.used_at = timezone.now()
         invitation.used_by = user
         invitation.save(update_fields=["used_at", "used_by"])
+        return user
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+
+    def validate_token(self, token):
+        reset = PasswordReset.find(token)
+        if reset is None or not reset.is_pending or not reset.user.is_active:
+            raise serializers.ValidationError("Ce lien est invalide ou a expiré.")
+        return reset
+
+    def validate(self, attrs):
+        try:
+            password_validation.validate_password(attrs["password"], attrs["token"].user)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({"password": list(exc.messages)})
+        return attrs
+
+    @transaction.atomic
+    def save(self):
+        # Lock the link so it cannot be used twice concurrently.
+        reset = PasswordReset.objects.select_for_update().select_related("user").get(pk=self.validated_data["token"].pk)
+        if not reset.is_pending:
+            raise serializers.ValidationError({"token": "Ce lien est invalide ou a expiré."})
+        user = reset.user
+        # A new password hash also ends the member's other sessions (session auth hash).
+        user.set_password(self.validated_data["password"])
+        user.save(update_fields=["password"])
+        reset.used_at = timezone.now()
+        reset.save(update_fields=["used_at"])
         return user

@@ -19,6 +19,7 @@ const PATHS = {
   forward: 'm9 18 6-6-6-6',
   camera: 'M3 8h4l2-3h6l2 3h4v11H3V8Zm9 9a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
   pin: 'M12 21s-7-6.2-7-11a7 7 0 1 1 14 0c0 4.8-7 11-7 11Zm0-8a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z',
+  key: 'M15 7a2 2 0 1 0 0 .01M21 8a5 5 0 0 1-6.8 4.7L12 15h-2v2H8v2H4v-3.5l7.3-7.3A5 5 0 1 1 21 8Z',
   image: 'M4 5h16v14H4V5Zm0 10 4-4 5 5m-2-2 3-3 6 6M15 9h.01',
   grid: 'M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z',
   chart: 'M4 20V10m6 10V4m6 16v-7m4 7H2',

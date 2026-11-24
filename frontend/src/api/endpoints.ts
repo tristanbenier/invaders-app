@@ -12,6 +12,7 @@ import type {
   OutingInput,
   Paginated,
   PublicInvitation,
+  PublicPasswordReset,
   Team,
   TeamStats,
 } from './types'
@@ -39,11 +40,17 @@ export const authApi = {
   invitation: (token: string) => api<PublicInvitation>(`/auth/invitations/${token}/`),
   acceptInvitation: (body: { token: string; email: string; display_name: string; password: string }) =>
     api<Me>('/auth/accept-invitation/', { method: 'POST', body }),
+  passwordReset: (token: string) => api<PublicPasswordReset>(`/auth/password-resets/${token}/`),
+  resetPassword: (token: string, password: string) =>
+    api<Me>('/auth/reset-password/', { method: 'POST', body: { token, password } }),
 }
 
 export const teamApi = {
   get: () => api<Team>('/team/'),
   removeMember: (id: number) => api<void>(`/team/members/${id}/`, { method: 'DELETE' }),
+  /** Admin only: single-use link (24 h) for a member who forgot their password. */
+  createPasswordReset: (id: number) =>
+    api<{ url: string; expires_at: string }>(`/team/members/${id}/password-reset/`, { method: 'POST' }),
   invitations: () => api<Invitation[]>('/invitations/'),
   invite: (email = '') => api<Invitation>('/invitations/', { method: 'POST', body: { email } }),
   revokeInvitation: (id: number) => api<void>(`/invitations/${id}/`, { method: 'DELETE' }),

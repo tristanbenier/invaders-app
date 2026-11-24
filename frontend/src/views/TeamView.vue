@@ -68,6 +68,30 @@ const revoke = (invitation: Invitation) =>
     invitations.value = invitations.value.filter((item) => item.id !== invitation.id)
   })
 
+// Last password reset link created, shown under its member (copied to the clipboard on creation).
+const resetLink = ref<{ memberId: number; url: string; copied: boolean } | null>(null)
+
+async function copyResetLink() {
+  const link = resetLink.value
+  if (!link) return
+  try {
+    await navigator.clipboard.writeText(link.url)
+    link.copied = true
+  } catch {
+    window.prompt('Copiez le lien :', link.url)
+  }
+}
+
+function createPasswordReset(member: Member) {
+  const question = `Créer un lien pour que ${member.display_name} choisisse un nouveau mot de passe ? Il sera valable 24 h et annulera le lien précédent.`
+  if (!window.confirm(question)) return
+  run(async () => {
+    const { url } = await teamApi.createPasswordReset(member.id)
+    resetLink.value = { memberId: member.id, url, copied: false }
+    await copyResetLink()
+  })
+}
+
 function removeMember(member: Member) {
   if (!window.confirm(`Retirer ${member.display_name} de l'équipe ? Son compte sera désactivé.`)) return
   run(async () => {
@@ -112,6 +136,17 @@ const logout = () =>
           <button
             v-if="auth.isAdmin && member.id !== auth.me?.id"
             type="button"
+            class="btn btn--icon"
+            :aria-label="`Lien de nouveau mot de passe pour ${member.display_name}`"
+            title="Mot de passe oublié : créer un lien"
+            :disabled="busy"
+            @click="createPasswordReset(member)"
+          >
+            <AppIcon name="key" :size="18" />
+          </button>
+          <button
+            v-if="auth.isAdmin && member.id !== auth.me?.id"
+            type="button"
             class="btn btn--icon btn--danger"
             :aria-label="`Retirer ${member.display_name}`"
             :disabled="busy"
@@ -119,6 +154,17 @@ const logout = () =>
           >
             <AppIcon name="trash" :size="18" />
           </button>
+          <div v-if="resetLink?.memberId === member.id" class="team__reset">
+            <p class="muted">
+              {{ resetLink.copied ? 'Lien copié' : 'Lien créé' }} : envoyez-le à {{ member.display_name }} (valable 24 h, une seule fois).
+            </p>
+            <div class="team__reset-row">
+              <code>{{ resetLink.url }}</code>
+              <button type="button" class="btn btn--icon" aria-label="Copier le lien" @click="copyResetLink">
+                <AppIcon :name="resetLink.copied ? 'check' : 'copy'" :size="18" />
+              </button>
+            </div>
+          </div>
         </li>
       </ul>
     </section>
@@ -196,6 +242,7 @@ const logout = () =>
 
 .team__list li {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 8px 0;
@@ -208,5 +255,30 @@ const logout = () =>
   display: flex;
   flex-direction: column;
   overflow-wrap: anywhere;
+}
+
+.team__reset {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+}
+
+.team__reset p {
+  margin: 0;
+}
+
+.team__reset-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.team__reset-row code {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  user-select: all;
 }
 </style>

@@ -33,6 +33,10 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /** Applied immediately, saved on the account; reverted if saving fails. */
+  async function resetPassword(token: string, password: string) {
+    me.value = await authApi.resetPassword(token, password)
+  }
+
   async function setMapTheme(theme: MapTheme) {
     if (!me.value || me.value.map_theme === theme) return
     const previous = me.value.map_theme
@@ -59,5 +63,5 @@ export const useAuthStore = defineStore('auth', () => {
     me.value = null
   }
 
-  return { me, loaded, isAuthenticated, isAdmin, fetchMe, login, acceptInvitation, setMapTheme, setFlashInvadersUid, setManualFlash, logout }
+  return { me, loaded, isAuthenticated, isAdmin, fetchMe, login, acceptInvitation, resetPassword, setMapTheme, setFlashInvadersUid, setManualFlash, logout }
 })

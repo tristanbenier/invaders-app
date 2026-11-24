@@ -61,6 +61,12 @@ export interface PublicInvitation {
   expires_at: string
 }
 
+/** Who a password reset link is for (public page). */
+export interface PublicPasswordReset {
+  display_name: string
+  email: string
+}
+
 export interface Country {
   id: number
   name: string

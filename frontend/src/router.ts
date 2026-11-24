@@ -19,6 +19,12 @@ export const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/reset-password/:token',
+      name: 'reset-password',
+      component: () => import('./views/ResetPasswordView.vue'),
+      meta: { public: true },
+    },
+    {
       path: '/',
       component: () => import('./views/MapView.vue'),
       children: [

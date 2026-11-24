@@ -12,7 +12,7 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
 
-# Base URL of the Vue app, used to build invitation links.
+# Base URL of the Vue app, used to build invitation and password reset links.
 FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:8080")
 
 INSTALLED_APPS = [
@@ -199,6 +199,7 @@ REST_FRAMEWORK = {
         "outing_plan": "20/min",
         "import": "20/hour",
         "invitations": "30/hour",
+        "password_reset": "20/hour",
     },
     # Proxies in front of Django (Caddy = 1): needed to throttle per real client IP rather than
     # everyone sharing 127.0.0.1. Keep 0 when Django is reached directly (dev).
@@ -210,6 +211,7 @@ TILE_RATE_LIMIT_PER_MINUTE = 600
 ADMIN_LOGIN_ATTEMPTS_PER_MINUTE = 10
 
 INVITATION_VALIDITY_DAYS = 7
+PASSWORD_RESET_VALIDITY_HOURS = 24
 
 # Sent to Nominatim for reverse geocoding; its usage policy requires an identifying value.
 GEOCODER_USER_AGENT = env("GEOCODER_USER_AGENT", default="Invaders/1.0 (team map for Space Invaders)")

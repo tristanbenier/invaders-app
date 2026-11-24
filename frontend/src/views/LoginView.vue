@@ -56,6 +56,7 @@ async function submit() {
     </form>
 
     <p class="muted auth__hint">Pas de compte ? Demandez un lien d'invitation à un membre de votre équipe.</p>
+    <p class="muted auth__hint">Mot de passe oublié ? Demandez un lien de réinitialisation à un administrateur de votre équipe.</p>
   </div>
 </template>
 
